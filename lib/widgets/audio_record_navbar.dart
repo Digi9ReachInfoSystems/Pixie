@@ -22,7 +22,7 @@ class BottomNavRecord extends StatefulWidget {
 class _BottomNavRecordState extends State<BottomNavRecord> {
   @override
   void initState() {
-    requestpermission();
+    // requestpermission();
     super.initState();
   }
 
@@ -57,25 +57,6 @@ class _BottomNavRecordState extends State<BottomNavRecord> {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Audio uploaded successfully')),
           );
-        } else if (state is AudioStopped) {
-          // context.read<StoryBloc>().add(AddMusicEvent(
-          //     event: 'bedtime', audiofile: File(state.audioPath)));
-          // Load the audio asset
-          final byteData = await rootBundle
-              .load("assets/fonts/AUDIO-2024-11-16-16-39-07.aac");
-
-          // Get the temporary directory
-          final tempDir = await getTemporaryDirectory();
-          final filePath = '${tempDir.path}/AUDIO-2024-11-16-16-39-07.aac';
-
-          // Write the asset data to a file
-          final file = File(filePath);
-          await file.writeAsBytes(byteData.buffer.asUint8List());
-
-          // Dispatch the event with the file
-          context
-              .read<StoryBloc>()
-              .add(AddMusicEvent(event: 'bedtime', audiofile: file));
         } else if (state is AudioUploadError) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text('Error uploading audio: ${state.error}')),
@@ -111,16 +92,14 @@ class _BottomNavRecordState extends State<BottomNavRecord> {
                     children: [
                       ElevatedButton(
                         onPressed: () {
-                          // context
-                          //     .read<BottomNavBloc>()
-                          //     .add(StartRecordingEvent());
+                          context.read<StoryBloc>().add(StartRecordingEvent());
                         },
                         child: const Text("Record Again"),
                       ),
                       ElevatedButton(
                         onPressed: () {
                           context.read<StoryBloc>().add(AddMusicEvent(
-                              event: "Bedtime",
+                              event:'',
                               audiofile: File(state.audioPath)));
                         },
                         child: const Text("Save Recording"),

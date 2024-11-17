@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_sound/flutter_sound.dart';
 import 'package:flutter_sound/public/flutter_sound_recorder.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
@@ -11,6 +12,7 @@ class StoryBloc extends Bloc<StoryEvent, StoryState> {
   final StoryRepository storyRepository;
   final FlutterSoundRecorder _recorder = FlutterSoundRecorder();
   String? _audioPath;
+  String? event;
 
   StoryBloc({required this.storyRepository}) : super(StoryInitial()) {
     _initializeRecorder();
@@ -24,14 +26,17 @@ class StoryBloc extends Bloc<StoryEvent, StoryState> {
     on<StopRecordingEvent>((event, emit) async => await _stopRecording(emit));
   }
 
-  // Initialize recorder
+  // Initialize the recorder
   Future<void> _initializeRecorder() async {
-    await _recorder.openRecorder();
-    _recorder.setSubscriptionDuration(const Duration(milliseconds: 500));
+    try {
+      await _recorder.openRecorder();
+      _recorder.setSubscriptionDuration(const Duration(milliseconds: 500));
+    } catch (e) {
+      print('Error initializing recorder: $e');
+    }
   }
 
   // Start recording audio
-
   Future<void> _startRecording(Emitter<StoryState> emit) async {
     try {
       var status = await Permission.microphone.status;
@@ -40,23 +45,11 @@ class StoryBloc extends Bloc<StoryEvent, StoryState> {
       }
 
       if (status.isGranted) {
-        Directory? directory;
-        if (Platform.isAndroid) {
-          directory = await getExternalStorageDirectory();
-          if (directory == null) {
-            emit(AudioUploadError('Unable to access storage on Android.'));
-            return;
-          }
-        } else if (Platform.isIOS) {
-          directory = await getApplicationDocumentsDirectory();
-        } else {
-          emit(AudioUploadError('Unsupported platform.'));
-          return;
-        }
-
-        final String path = '${directory.path}/Audio';
-        await Directory(path).create(recursive: true);
-        _audioPath = '$path/audio_${DateTime.now().millisecondsSinceEpoch}.aac';
+        final Directory? externalDir = await getExternalStorageDirectory();
+        final String externalPath = '${externalDir?.path}/Music';
+        await Directory(externalPath).create(recursive: true);
+        _audioPath =
+            '$externalPath/audio_${DateTime.now().millisecondsSinceEpoch}.aac';
 
         emit(AudioRecording());
         await _recorder.startRecorder(toFile: _audioPath);
@@ -75,6 +68,7 @@ class StoryBloc extends Bloc<StoryEvent, StoryState> {
       await _recorder.stopRecorder();
       if (_audioPath != null) {
         emit(AudioStopped(audioPath: _audioPath!));
+        print('Recording stopped. File saved at $_audioPath');
       } else {
         emit(AudioUploadError('Recording failed; audio path is null.'));
       }
@@ -127,13 +121,13 @@ class StoryBloc extends Bloc<StoryEvent, StoryState> {
   Future<void> _onAddMusicEvent(
       AddMusicEvent event, Emitter<StoryState> emit) async {
     emit(StoryLoading());
-    print('gdbdb${event.audiofile}');
     try {
+      print('fff${event.event}');
       final audioFile = await storyRepository.addMusicToAudio(
         event: event.event,
         audioFile: event.audiofile,
       );
-      print((audioFile.path));
+      print('gg$audioFile');
       emit(RecordedStoryAudioSuccess(musicAddedaudioFile: audioFile));
     } catch (error) {
       emit(StoryFailure(error: error.toString()));
@@ -148,8 +142,8 @@ class StoryBloc extends Bloc<StoryEvent, StoryState> {
 
   // Dispose the recorder when bloc is closed
   @override
-  Future<void> close() {
-    _recorder.closeRecorder();
+  Future<void> close() async {
+    await _recorder.closeRecorder();
     return super.close();
   }
 }

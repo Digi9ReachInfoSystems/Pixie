@@ -267,7 +267,10 @@ class _StoryGeneratePageState extends State<StoryGeneratePage> {
                         state is RecordedStoryAudioSuccess)
                     ? NavBar2(
                         documentReference: _documentReference,
-                        audioFile: audioFile!,
+                        audioFile: state is StoryAudioSuccess
+                            ? (state).audioFile
+                            : (state as RecordedStoryAudioSuccess)
+                                .musicAddedaudioFile,
                         story: widget.story['story'] ?? 'No Story available',
                         title: widget.story['title'] ?? 'No title available',
                         firebaseAudioPath: audioUrl ?? '',

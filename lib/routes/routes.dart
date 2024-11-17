@@ -199,7 +199,7 @@ final GoRouter router = GoRouter(
     ),
     GoRoute(
       path: '/aboutPage',
-
+      builder: (context, state) => const AboutPage(),
     ),
     GoRoute(
       path: '/Firebasestory',

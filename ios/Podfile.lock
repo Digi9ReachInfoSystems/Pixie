@@ -1178,15 +1178,26 @@ PODS:
   - Firebase/Firestore (11.2.0):
     - Firebase/CoreOnly
     - FirebaseFirestore (~> 11.2.0)
+  - Firebase/Messaging (11.2.0):
+    - Firebase/CoreOnly
+    - FirebaseMessaging (~> 11.2.0)
   - Firebase/Storage (11.2.0):
     - Firebase/CoreOnly
     - FirebaseStorage (~> 11.2.0)
+  - firebase_analytics (11.4.5):
+    - Firebase/Analytics (= 11.2.0)
+    - firebase_core
+    - Flutter
   - firebase_auth (5.3.3):
     - Firebase/Auth (= 11.2.0)
     - firebase_core
     - Flutter
-  - firebase_core (3.8.0):
+  - firebase_core (3.13.0):
     - Firebase/CoreOnly (= 11.2.0)
+    - Flutter
+  - firebase_messaging (15.2.5):
+    - Firebase/Messaging (= 11.2.0)
+    - firebase_core
     - Flutter
   - firebase_storage (12.3.6):
     - Firebase/Storage (= 11.2.0)
@@ -1254,6 +1265,15 @@ PODS:
     - GoogleUtilities/Environment (~> 8.0)
     - GoogleUtilities/UserDefaults (~> 8.0)
     - PromisesObjC (~> 2.4)
+  - FirebaseMessaging (11.2.0):
+    - FirebaseCore (~> 11.0)
+    - FirebaseInstallations (~> 11.0)
+    - GoogleDataTransport (~> 10.0)
+    - GoogleUtilities/AppDelegateSwizzler (~> 8.0)
+    - GoogleUtilities/Environment (~> 8.0)
+    - GoogleUtilities/Reachability (~> 8.0)
+    - GoogleUtilities/UserDefaults (~> 8.0)
+    - nanopb (~> 3.30910.0)
   - FirebaseSharedSwift (11.5.0)
   - FirebaseStorage (11.2.0):
     - FirebaseAppCheckInterop (~> 11.0)
@@ -1269,6 +1289,11 @@ PODS:
     - Flutter
     - flutter_sound_core (= 9.17.0)
   - flutter_sound_core (9.17.0)
+  - geocoding_ios (1.0.5):
+    - Flutter
+  - geolocator_apple (1.2.0):
+    - Flutter
+    - FlutterMacOS
   - google_sign_in_ios (0.0.1):
     - AppAuth (>= 1.7.4)
     - Flutter
@@ -1295,6 +1320,9 @@ PODS:
     - GoogleUtilities/Network (~> 8.0)
     - "GoogleUtilities/NSData+zlib (~> 8.0)"
     - nanopb (~> 3.30910.0)
+  - GoogleDataTransport (10.1.0):
+    - nanopb (~> 3.30910.0)
+    - PromisesObjC (~> 2.4)
   - GoogleSignIn (7.1.0):
     - AppAuth (< 2.0, >= 1.7.3)
     - GTMAppAuth (< 5.0, >= 4.1.1)
@@ -1432,6 +1460,8 @@ PODS:
     - nanopb/encode (= 3.30910.0)
   - nanopb/decode (3.30910.0)
   - nanopb/encode (3.30910.0)
+  - package_info_plus (0.4.5):
+    - Flutter
   - path_provider_foundation (0.0.1):
     - Flutter
     - FlutterMacOS
@@ -1443,9 +1473,11 @@ PODS:
   - RecaptchaInterop (100.0.0)
   - share_plus (0.0.1):
     - Flutter
-  - sms_autofill (0.0.1):
+  - sign_in_with_apple (0.0.1):
     - Flutter
   - url_launcher_ios (0.0.1):
+    - Flutter
+  - wakelock_plus (0.0.1):
     - Flutter
 
 DEPENDENCIES:
@@ -1457,20 +1489,26 @@ DEPENDENCIES:
   - Firebase/Core
   - Firebase/Firestore
   - Firebase/Storage
+  - firebase_analytics (from `.symlinks/plugins/firebase_analytics/ios`)
   - firebase_auth (from `.symlinks/plugins/firebase_auth/ios`)
   - firebase_core (from `.symlinks/plugins/firebase_core/ios`)
+  - firebase_messaging (from `.symlinks/plugins/firebase_messaging/ios`)
   - firebase_storage (from `.symlinks/plugins/firebase_storage/ios`)
   - Flutter (from `Flutter`)
   - flutter_keyboard_visibility (from `.symlinks/plugins/flutter_keyboard_visibility/ios`)
   - flutter_sound (from `.symlinks/plugins/flutter_sound/ios`)
+  - geocoding_ios (from `.symlinks/plugins/geocoding_ios/ios`)
+  - geolocator_apple (from `.symlinks/plugins/geolocator_apple/darwin`)
   - google_sign_in_ios (from `.symlinks/plugins/google_sign_in_ios/darwin`)
   - just_audio (from `.symlinks/plugins/just_audio/ios`)
+  - package_info_plus (from `.symlinks/plugins/package_info_plus/ios`)
   - path_provider_foundation (from `.symlinks/plugins/path_provider_foundation/darwin`)
   - permission_handler_apple (from `.symlinks/plugins/permission_handler_apple/ios`)
   - pointer_interceptor_ios (from `.symlinks/plugins/pointer_interceptor_ios/ios`)
   - share_plus (from `.symlinks/plugins/share_plus/ios`)
-  - sms_autofill (from `.symlinks/plugins/sms_autofill/ios`)
+  - sign_in_with_apple (from `.symlinks/plugins/sign_in_with_apple/ios`)
   - url_launcher_ios (from `.symlinks/plugins/url_launcher_ios/ios`)
+  - wakelock_plus (from `.symlinks/plugins/wakelock_plus/ios`)
 
 SPEC REPOS:
   trunk:
@@ -1488,10 +1526,12 @@ SPEC REPOS:
     - FirebaseFirestore
     - FirebaseFirestoreInternal
     - FirebaseInstallations
+    - FirebaseMessaging
     - FirebaseSharedSwift
     - FirebaseStorage
     - flutter_sound_core
     - GoogleAppMeasurement
+    - GoogleDataTransport
     - GoogleSignIn
     - GoogleUtilities
     - "gRPC-C++"
@@ -1510,10 +1550,14 @@ EXTERNAL SOURCES:
     :path: ".symlinks/plugins/audioplayers_darwin/ios"
   cloud_firestore:
     :path: ".symlinks/plugins/cloud_firestore/ios"
+  firebase_analytics:
+    :path: ".symlinks/plugins/firebase_analytics/ios"
   firebase_auth:
     :path: ".symlinks/plugins/firebase_auth/ios"
   firebase_core:
     :path: ".symlinks/plugins/firebase_core/ios"
+  firebase_messaging:
+    :path: ".symlinks/plugins/firebase_messaging/ios"
   firebase_storage:
     :path: ".symlinks/plugins/firebase_storage/ios"
   Flutter:
@@ -1522,10 +1566,16 @@ EXTERNAL SOURCES:
     :path: ".symlinks/plugins/flutter_keyboard_visibility/ios"
   flutter_sound:
     :path: ".symlinks/plugins/flutter_sound/ios"
+  geocoding_ios:
+    :path: ".symlinks/plugins/geocoding_ios/ios"
+  geolocator_apple:
+    :path: ".symlinks/plugins/geolocator_apple/darwin"
   google_sign_in_ios:
     :path: ".symlinks/plugins/google_sign_in_ios/darwin"
   just_audio:
     :path: ".symlinks/plugins/just_audio/ios"
+  package_info_plus:
+    :path: ".symlinks/plugins/package_info_plus/ios"
   path_provider_foundation:
     :path: ".symlinks/plugins/path_provider_foundation/darwin"
   permission_handler_apple:
@@ -1534,22 +1584,26 @@ EXTERNAL SOURCES:
     :path: ".symlinks/plugins/pointer_interceptor_ios/ios"
   share_plus:
     :path: ".symlinks/plugins/share_plus/ios"
-  sms_autofill:
-    :path: ".symlinks/plugins/sms_autofill/ios"
+  sign_in_with_apple:
+    :path: ".symlinks/plugins/sign_in_with_apple/ios"
   url_launcher_ios:
     :path: ".symlinks/plugins/url_launcher_ios/ios"
+  wakelock_plus:
+    :path: ".symlinks/plugins/wakelock_plus/ios"
 
 SPEC CHECKSUMS:
   abseil: d121da9ef7e2ff4cab7666e76c5a3e0915ae08c3
   AppAuth: 501c04eda8a8d11f179dbe8637b7a91bb7e5d2fa
-  audio_session: 088d2483ebd1dc43f51d253d4a1c517d9a2e7207
-  audioplayers_darwin: 877d9a4d06331c5c374595e46e16453ac7eafa40
+  audio_session: f08db0697111ac84ba46191b55488c0563bb29c6
+  audioplayers_darwin: ccf9c770ee768abb07e26d90af093f7bab1c12ab
   BoringSSL-GRPC: ca6a8e5d04812fce8ffd6437810c2d46f925eaeb
-  cloud_firestore: 7037135a443cf16e3fc1da9271e61b7e2bfa0825
+  cloud_firestore: e1e397fe8791c4ac4d15da7aafcad3332d02e905
   Firebase: 98e6bf5278170668a7983e12971a66b2cd57fc8c
-  firebase_auth: baab82e89e578f3066a60331c8aeec0f4019a6d5
-  firebase_core: 92849f23b6b7097c1bcd2cec52f1c4bcb33ab90a
-  firebase_storage: a2e562d5cb3c9c6267a3dfc24291218407154f2a
+  firebase_analytics: 1d405af09ec191e138f2ab2d59c095d3a946b66a
+  firebase_auth: 9360fc54d0a33935cd8cded1a315eb6e1a5cd8e7
+  firebase_core: 0af7561614187021a059bfc2a881524ef4ab721a
+  firebase_messaging: 76a722040812687e64defc5dc61b0206b4b55dde
+  firebase_storage: 7d2024582d1120f588052f22c877369545af8bee
   FirebaseAnalytics: c36efd5710c60c17558650fa58c2066eca7e9265
   FirebaseAppCheckInterop: d265d9f4484e7ec1c591086408840fdd383d1213
   FirebaseAuth: 2a198b8cdbbbd457f08d74df7040feb0a0e7777a
@@ -1560,32 +1614,38 @@ SPEC CHECKSUMS:
   FirebaseFirestore: 62708adbc1dfcd6d165a7c0a202067b441912dc9
   FirebaseFirestoreInternal: ad9b9ee2d3d430c8f31333a69b3b6737a7206232
   FirebaseInstallations: 6ef4a1c7eb2a61ee1f74727d7f6ce2e72acf1414
+  FirebaseMessaging: c9ec7b90c399c7a6100297e9d16f8a27fc7f7152
   FirebaseSharedSwift: 302ac5967857ad7e7388b15382d705b8c8d892aa
   FirebaseStorage: 9353f926690b2329957860abfcbc8b4074fe45e8
   Flutter: e0871f40cf51350855a761d2e70bf5af5b9b5de7
-  flutter_keyboard_visibility: 0339d06371254c3eb25eeb90ba8d17dca8f9c069
-  flutter_sound: ee90d437be3fb59424e195ff7f22884a6f98508c
+  flutter_keyboard_visibility: 4625131e43015dbbe759d9b20daaf77e0e3f6619
+  flutter_sound: 6b832c8721782b58d891064ed81a25ddd780c234
   flutter_sound_core: 714d3f327d960314396f56018c9b63523e2960b4
-  google_sign_in_ios: 07375bfbf2620bc93a602c0e27160d6afc6ead38
+  geocoding_ios: bcbdaa6bddd7d3129c9bcb8acddc5d8778689768
+  geolocator_apple: ab36aa0e8b7d7a2d7639b3b4e48308394e8cef5e
+  google_sign_in_ios: 0ab078e60da6dfe23cbc55c83502b52bba1aad63
   GoogleAppMeasurement: 76d4f8b36b03bd8381fa9a7fe2cc7f99c0a2e93a
+  GoogleDataTransport: aae35b7ea0c09004c3797d53c8c41f66f219d6a7
   GoogleSignIn: d4281ab6cf21542b1cfaff85c191f230b399d2db
   GoogleUtilities: 26a3abef001b6533cf678d3eb38fd3f614b7872d
   "gRPC-C++": 2fa52b3141e7789a28a737f251e0c45b4cb20a87
   gRPC-Core: a27c294d6149e1c39a7d173527119cfbc3375ce4
   GTMAppAuth: f69bd07d68cd3b766125f7e072c45d7340dea0de
   GTMSessionFetcher: 5aea5ba6bd522a239e236100971f10cb71b96ab6
-  just_audio: baa7252489dbcf47a4c7cc9ca663e9661c99aafa
+  just_audio: 6c031bb61297cf218b4462be616638e81c058e97
   leveldb-library: cc8b8f8e013647a295ad3f8cd2ddf49a6f19be19
   nanopb: fad817b59e0457d11a5dfbde799381cd727c1275
-  path_provider_foundation: 2b6b4c569c0fb62ec74538f866245ac84301af46
-  permission_handler_apple: 9878588469a2b0d0fc1e048d9f43605f92e6cec2
-  pointer_interceptor_ios: 508241697ff0947f853c061945a8b822463947c1
+  package_info_plus: af8e2ca6888548050f16fa2f1938db7b5a5df499
+  path_provider_foundation: 080d55be775b7414fd5a5ef3ac137b97b097e564
+  permission_handler_apple: 4ed2196e43d0651e8ff7ca3483a069d469701f2d
+  pointer_interceptor_ios: ec847ef8b0915778bed2b2cef636f4d177fa8eed
   PromisesObjC: f5707f49cb48b9636751c5b2e7d227e43fba9f47
   RecaptchaInterop: 7d1a4a01a6b2cb1610a47ef3f85f0c411434cb21
-  share_plus: 8b6f8b3447e494cca5317c8c3073de39b3600d1f
-  sms_autofill: c461043483362c3f1709ee76eaae6eb570b31686
-  url_launcher_ios: 5334b05cef931de560670eeae103fd3e431ac3fe
+  share_plus: 50da8cb520a8f0f65671c6c6a99b3617ed10a58a
+  sign_in_with_apple: c5dcc141574c8c54d5ac99dd2163c0c72ad22418
+  url_launcher_ios: 694010445543906933d732453a59da0a173ae33d
+  wakelock_plus: 04623e3f525556020ebd4034310f20fe7fda8b49
 
 PODFILE CHECKSUM: ab544b19017843a6b7439e1a37a4e25ab502813f
 
-COCOAPODS: 1.15.2
+COCOAPODS: 1.16.2

@@ -13,7 +13,6 @@ import 'package:pixieapp/blocs/Navbar_Bloc/navbar_bloc.dart';
 import 'package:pixieapp/blocs/StoryFeedback/story_feedback_bloc.dart';
 import 'package:pixieapp/blocs/Story_bloc/story_bloc.dart';
 import 'package:pixieapp/blocs/add_character_Bloc.dart/add_character_bloc.dart';
-import 'package:pixieapp/blocs/bottom_nav_bloc/bottom_nav_bloc.dart';
 import 'package:pixieapp/blocs/introduction/introduction_bloc.dart';
 import 'package:pixieapp/const/textstyle.dart';
 import 'package:pixieapp/firebase_options.dart';

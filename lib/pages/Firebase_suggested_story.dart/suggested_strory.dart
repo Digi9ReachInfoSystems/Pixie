@@ -5,11 +5,17 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:pixieapp/blocs/Story_bloc/story_bloc.dart';
+import 'package:pixieapp/blocs/Story_bloc/story_event.dart';
+import 'package:pixieapp/blocs/Story_bloc/story_state.dart';
 import 'package:pixieapp/const/colors.dart';
 import 'package:pixieapp/repositories/story_repository.dart';
 import 'package:pixieapp/widgets/loading_widget.dart';
-import 'package:pixieapp/widgets/navbar2.dart';
+import 'package:pixieapp/widgets/progress_nav_bar.dart';
+import 'package:pixieapp/widgets/suggestedstorynavbar.dart';
+import 'package:wakelock_plus/wakelock_plus.dart';
 
 class Firebasesuggestedstory extends StatefulWidget {
   final DocumentReference<Object?> storyDocRef;
@@ -31,6 +37,7 @@ class _FirebasesuggestedstoryState extends State<Firebasesuggestedstory> {
   @override
   void initState() {
     super.initState();
+    WakelockPlus.enable();
     _fetchUserDataAndStory();
   }
 
@@ -69,17 +76,28 @@ class _FirebasesuggestedstoryState extends State<Firebasesuggestedstory> {
       if (docSnapshot.exists) {
         Map<String, dynamic>? fetchedStoryData =
             docSnapshot.data() as Map<String, dynamic>?;
+        print(fetchedStoryData!['title']);
+        // print(fetchedStoryData['feedback_ref'].toString() ?? "null");
 
-        File? generatedAudioFile = await storyRepository.speechToText(
-          text: fetchedStoryData?["title"]! + fetchedStoryData?["story"]!,
-          language: fetchedStoryData?["language"],
-        );
-
-        String? geaudioUrl = await _uploadAudioToStorage(generatedAudioFile);
+        // File? generatedAudioFile = await storyRepository.speechToText(
+        //   text: fetchedStoryData?["title"]! + fetchedStoryData?["story"]!,
+        //   language: fetchedStoryData?["language"],
+        // );
+        print(formatText(fetchedStoryData?["title"]) +
+            formatText(fetchedStoryData?["story"]));
+        context.read<StoryBloc>().add(SpeechToTextEvent(
+            language: fetchedStoryData?["language"],
+          
+            // formatText(fetchedStoryData["title"]) +
+            //     formatText(fetchedStoryData["story"]),
+            text: formatText("${fetchedStoryData["title"]}.") +
+      formatText(fetchedStoryData["story"]),
+            event: fetchedStoryData?["event"]));
+        // String? geaudioUrl = await _uploadAudioToStorage(generatedAudioFile);
         setState(() {
           storyData = fetchedStoryData;
-          audioFile = generatedAudioFile;
-          audioUrl = geaudioUrl;
+          // audioFile = generatedAudioFile;
+          // audioUrl = geaudioUrl;
         });
         print('Audio file generated: $audioFile');
       } else {
@@ -128,101 +146,111 @@ class _FirebasesuggestedstoryState extends State<Firebasesuggestedstory> {
       );
     }
 
-    return Scaffold(
-      backgroundColor: const Color.fromRGBO(255, 255, 255, 1),
-      body: CustomScrollView(
-        slivers: [
-          SliverAppBar(
-            automaticallyImplyLeading: false,
-            expandedHeight: deviceHeight * 0.20,
-            leadingWidth: deviceWidth,
-            collapsedHeight: deviceHeight * 0.08,
-             toolbarHeight: deviceHeight * 0.07,
-            pinned: true,
-            floating: false,
-            backgroundColor: const Color(0xff644a98).withOpacity(.99),
-            flexibleSpace: LayoutBuilder(
-              builder: (BuildContext context, BoxConstraints constraints) {
-                var top = constraints.biggest.height;
-                bool isCollapsed = top <= kToolbarHeight + 30;
+    return BlocBuilder<StoryBloc, StoryState>(builder: (context, state) {
+      return Scaffold(
+        backgroundColor: const Color.fromRGBO(255, 255, 255, 1),
+        body: CustomScrollView(
+          slivers: [
+            SliverAppBar(
+              automaticallyImplyLeading: false,
+              expandedHeight: deviceHeight * 0.20,
+              leadingWidth: deviceWidth,
+              collapsedHeight: deviceHeight * 0.08,
+              toolbarHeight: deviceHeight * 0.07,
+              pinned: true,
+              floating: false,
+              backgroundColor: const Color(0xff644a98).withOpacity(.99),
+              flexibleSpace: LayoutBuilder(
+                builder: (BuildContext context, BoxConstraints constraints) {
+                  var top = constraints.biggest.height;
+                  bool isCollapsed = top <= kToolbarHeight + 30;
 
-                return FlexibleSpaceBar(
-                  centerTitle: false,
-                  titlePadding: EdgeInsets.only(
-                      left: 16, bottom: 10, right: deviceWidth * 0.13),
-                  title: Text(
-                    formatText(storyData?["title"] ?? "No data"),
-                    style: theme.textTheme.titleMedium!.copyWith(
-                      color: AppColors.textColorWhite,
-                      fontWeight: FontWeight.bold,
-                      fontSize: isCollapsed ? 5 : 20,
+                  return FlexibleSpaceBar(
+                    centerTitle: false,
+                    titlePadding: EdgeInsets.only(
+                        left: 16, bottom: 10, right: deviceWidth * 0.13),
+                    title: Text(
+                      formatText(storyData?["title"] ?? "No data"),
+                      style: theme.textTheme.titleMedium!.copyWith(
+                        color: AppColors.textColorWhite,
+                        fontWeight: FontWeight.bold,
+                        fontSize: isCollapsed ? 5 : 20,
+                      ),
+                    ),
+                    background: Image.asset(
+                      'assets/images/appbarbg2.jpg',
+                      fit: BoxFit.cover,
+                    ),
+                  );
+                },
+              ),
+              actions: [
+                Padding(
+                  padding: EdgeInsets.only(right: deviceWidth * 0.01),
+                  child: Container(
+                    width: 40,
+                    height: 40,
+                    decoration: BoxDecoration(
+                      color: AppColors.kwhiteColor.withOpacity(0.4),
+                      borderRadius: BorderRadius.circular(40.0),
+                    ),
+                    child: IconButton(
+                      icon: const Icon(Icons.close),
+                      onPressed: () {
+                        context.read<StoryBloc>().add(StopplayingEvent());
+                        context.pop();
+                      },
                     ),
                   ),
-                  background: Image.asset(
-                    'assets/images/appbarbg2.jpg',
-                    fit: BoxFit.cover,
-                  ),
-                );
-              },
+                ),
+              ],
             ),
-            actions: [
-              Padding(
-                padding: EdgeInsets.only(right: deviceWidth * 0.01),
-                child: Container(
-                  width: 40,
-                  height: 40,
-                  decoration: BoxDecoration(
-                    color: AppColors.kwhiteColor.withOpacity(0.4),
-                    borderRadius: BorderRadius.circular(40.0),
-                  ),
-                  child: IconButton(
-                    icon: const Icon(Icons.close),
-                    onPressed: () => context.pop(),
-                  ),
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: EdgeInsets.only(
+                  top: 5,
+                  left: deviceHeight * 0.0294,
+                  right: deviceHeight * 0.0294,
+                  bottom: deviceHeight * 0.0294,
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    AnimatedTextKit(
+                      isRepeatingAnimation: false,
+                      pause: const Duration(milliseconds: 1000),
+                      animatedTexts: [
+                        TyperAnimatedText(
+                          formatText(storyData?["story"] ?? "No data"),
+                          textStyle: theme.textTheme.bodyMedium!.copyWith(
+                            fontSize: 24,
+                            fontWeight: FontWeight.w400,
+                          ),
+                          speed: const Duration(milliseconds: 20),
+                        ),
+                      ],
+                    ),
+                  ],
                 ),
               ),
-            ],
-          ),
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: EdgeInsets.only(
-                top: 5,
-                left: deviceHeight * 0.0294,
-                right: deviceHeight * 0.0294,
-                bottom: deviceHeight * 0.0294,
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  AnimatedTextKit(
-                    isRepeatingAnimation: false,
-                    pause: const Duration(milliseconds: 1000),
-                    animatedTexts: [
-                      TyperAnimatedText(
-                        formatText(storyData?["story"] ?? "No data"),
-                        textStyle: theme.textTheme.bodyMedium!.copyWith(
-                          fontSize: 24,
-                          fontWeight: FontWeight.w400,
-                        ),
-                        speed: const Duration(milliseconds: 20),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
             ),
-          ),
-        ],
-      ),
-      bottomNavigationBar: NavBar2(
-        documentReference: widget.storyDocRef,
-        audioFile: audioFile!,
-        story: storyData?["story"] ?? 'No Story available',
-        title: storyData?["title"] ?? 'No title available',
-        firebaseAudioPath: audioUrl!,
-        suggestedStories: true,
-        firebaseStories: false,
-      ),
-    );
+          ],
+        ),
+        bottomNavigationBar: state is StoryAudioSuccess
+            ? SuggstedStoryNavbar(
+                dislike: storyData?["feedback_ref"] == null ? false : true,
+                liked: storyData?["isfav"] == true ? true : false,
+                documentReference: widget.storyDocRef,
+                audioFile: state.audioFile,
+                story: formatText(storyData?["story"] ?? "No data") ??
+                    'No Story available',
+                title: formatText(storyData?["title"] ?? "No data") ??
+                    'No title available',
+                firebaseAudioPath: "audioUrl",
+                firebaseStories: false,
+              )
+            : const ProgressNavBar(),
+      );
+    });
   }
 }

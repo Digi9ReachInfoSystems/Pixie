@@ -8,6 +8,8 @@ import 'package:pixieapp/const/colors.dart';
 import 'package:pixieapp/widgets/logout_bottom_sheet.dart';
 import 'package:pixieapp/widgets/navbar.dart';
 import 'package:go_router/go_router.dart';
+import 'package:url_launcher/url_launcher.dart';
+import 'package:pixieapp/widgets/analytics.dart';
 
 class SettingsPage extends StatefulWidget {
   const SettingsPage({super.key});
@@ -17,6 +19,16 @@ class SettingsPage extends StatefulWidget {
 }
 
 class _SettingsPageState extends State<SettingsPage> {
+  @override
+  void initState() {
+    // TODO: implement initState
+    super.initState();
+    AnalyticsService.logScreenView(
+      screenName: '/SettingsPage',
+      screenClass: 'Settings Screen',
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -82,8 +94,11 @@ class _SettingsPageState extends State<SettingsPage> {
                           context
                               .read<AuthBloc>()
                               .add(AuthGuestLoginRequested());
-                          context.push('/CreateAccount');
+                          context.push('/CreateAccount',
+                              extra: 'Create an account');
                         } else {
+                          AnalyticsService.logEvent(
+                              eventName: 'profile_button');
                           // If authenticated, navigate to AddCharacter page
                           context.push('/profilePage');
                         }
@@ -101,8 +116,11 @@ class _SettingsPageState extends State<SettingsPage> {
                           context
                               .read<AuthBloc>()
                               .add(AuthGuestLoginRequested());
-                          context.push('/CreateAccount');
+                          context.push('/CreateAccount',
+                              extra: 'Create an account');
                         } else {
+                          AnalyticsService.logEvent(
+                              eventName: 'feedback_button');
                           // If authenticated, navigate to AddCharacter page
                           context.push('/feedbackPage');
                         }
@@ -113,14 +131,28 @@ class _SettingsPageState extends State<SettingsPage> {
                     profilelistCard(
                       title: 'About',
                       ontap: () async {
+                        AnalyticsService.logEvent(eventName: 'about_button');
                         context.push('/aboutPage');
                       },
                       icon_path: 'assets/images/about.svg',
                       theme: theme,
                     ),
                     profilelistCard(
+                      title: 'Invite a friend',
+                      ontap: () {
+                        AnalyticsService.logEvent(
+                            eventName: 'invite_friend_button');
+                        openWhatsAppChat(
+                            '''Hey parent! Create personalized audio stories for your child! Introduce them to AI, inspiring them to think beyond. Pixie – their adventure buddy to reduce screentime. \n\n For ios app:https://apps.apple.com/us/app/pixie-dream-create-inspire/id6737147663\n\n For Android app : https://play.google.com/store/apps/details?id=com.fabletronic.pixie.''');
+                      },
+                      icon_path: 'assets/images/share.svg',
+                      theme: theme,
+                    ),
+                    profilelistCard(
                       title: 'Logout',
                       ontap: () async {
+                        AnalyticsService.logEvent(
+                            eventName: 'logout_triggered_button');
                         // Check if the user is a guest
                         final authState = context.read<AuthBloc>().state;
                         if (authState is AuthGuest) {
@@ -128,7 +160,8 @@ class _SettingsPageState extends State<SettingsPage> {
                           context
                               .read<AuthBloc>()
                               .add(AuthGuestLoginRequested());
-                          context.push('/CreateAccount');
+                          context.push('/CreateAccount',
+                              extra: 'Create an account');
                         } else {
                           await showModalBottomSheet(
                             isScrollControlled: true,
@@ -174,13 +207,14 @@ class _SettingsPageState extends State<SettingsPage> {
         child: Container(
           height: 56,
           width: MediaQuery.of(context).size.width,
-          color: Color(0xffe9d6eb),
+          color: const Color(0xffe9d6eb),
           child: Padding(
             padding: const EdgeInsets.only(left: 20.0, right: 20.0),
             child: Row(
               children: [
                 SvgPicture.asset(
                   icon_path,
+                  width: 30,
                 ),
                 const SizedBox(width: 10),
                 Text(
@@ -195,5 +229,16 @@ class _SettingsPageState extends State<SettingsPage> {
         ),
       ),
     );
+  }
+}
+
+Future<void> openWhatsAppChat(String text) async {
+  var url = "https://wa.me/?text=$text";
+  var uri = Uri.encodeFull(url);
+
+  if (await canLaunchUrl(Uri.parse(uri))) {
+    await launchUrl(Uri.parse(uri), mode: LaunchMode.externalApplication);
+  } else {
+    throw 'Could not launch WhatsApp';
   }
 }

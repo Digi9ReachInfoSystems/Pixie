@@ -52,11 +52,6 @@ class FetchStoryBloc extends Bloc<FetchStoryEvent, StoryState> {
     }
   }
 
-
-  
- 
-
-
   // // Sort stories by createdTime in descending order (latest first)
   // List<Map<String, dynamic>> _sortStoriesByTime(
   //     List<Map<String, dynamic>> stories) {
@@ -90,13 +85,15 @@ class FetchStoryBloc extends Bloc<FetchStoryEvent, StoryState> {
       return true;
     }).toList();
   }
-   void _onSearchStories(SearchStoryEvent event, Emitter<StoryState> emit) {
+
+  void _onSearchStories(SearchStoryEvent event, Emitter<StoryState> emit) {
     if (state is StoryLoaded) {
       final loadedState = state as StoryLoaded;
 
       // Apply search filter to the original list of stories
       final filteredStories = loadedState.stories.where((story) {
         final title = story['title']?.toLowerCase() ?? '';
+
         return title.contains(event.query.toLowerCase());
       }).toList();
 

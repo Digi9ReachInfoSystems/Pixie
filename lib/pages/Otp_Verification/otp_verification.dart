@@ -1,15 +1,11 @@
-import 'dart:developer';
-
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:pixieapp/blocs/Auth_bloc/auth_bloc.dart';
 import 'package:pixieapp/blocs/Auth_bloc/auth_event.dart';
 import 'package:pixieapp/blocs/Auth_bloc/auth_state.dart';
-
 import 'package:pixieapp/const/colors.dart';
-import 'package:pixieapp/pages/home/home_page.dart';
+import 'package:pixieapp/widgets/loading_widget.dart';
 
 class OtpVerification extends StatefulWidget {
   final String
@@ -23,10 +19,12 @@ class OtpVerification extends StatefulWidget {
 
 class _OtpVerificationState extends State<OtpVerification> {
   final TextEditingController _otpController = TextEditingController();
+  final FocusNode _focusNode = FocusNode();
 
   @override
   void dispose() {
     _otpController.dispose();
+    _focusNode.dispose();
     super.dispose();
   }
 
@@ -40,9 +38,17 @@ class _OtpVerificationState extends State<OtpVerification> {
       listener: (context, state) {
         if (state is AuthAuthenticated) {
           context.go('/HomePage');
-        } else {
+        } else if (state is LoginScreenErrorState) {
+          _focusNode.unfocus();
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Error')),
+            SnackBar(content: Text(state.error)),
+          );
+        } else {
+          _focusNode.unfocus();
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+                content: Text(
+                    "Something went wrong. Check your connection and try again.")),
           );
         }
       },
@@ -89,6 +95,13 @@ class _OtpVerificationState extends State<OtpVerification> {
 
                       // Updated TextField for OTP input
                       TextField(
+                        focusNode: _focusNode,
+                        onChanged: (value) {
+                          if (value.length == 6) {
+                            _focusNode.unfocus();
+                          }
+                        },
+                        cursorColor: AppColors.kpurple,
                         controller: _otpController,
                         decoration: const InputDecoration(
                           disabledBorder: OutlineInputBorder(
@@ -98,6 +111,7 @@ class _OtpVerificationState extends State<OtpVerification> {
                           enabledBorder: OutlineInputBorder(
                               borderSide: BorderSide(color: AppColors.kpurple)),
                           labelText: 'Enter OTP',
+                          labelStyle: TextStyle(color: AppColors.kpurple),
                           border: OutlineInputBorder(),
                           hintText: '6-digit code',
                         ),
@@ -123,12 +137,14 @@ class _OtpVerificationState extends State<OtpVerification> {
                               return;
                             }
 
-                            BlocProvider.of<AuthBloc>(context).add(
-                              VerifySentOtp(
-                                otpCode: _otpController.text,
-                                verificationId: widget.verificationId,
-                              ),
-                            );
+                            if (state is! AuthLoading) {
+                              BlocProvider.of<AuthBloc>(context).add(
+                                VerifySentOtp(
+                                  otpCode: _otpController.text,
+                                  verificationId: widget.verificationId,
+                                ),
+                              );
+                            }
                             // try {
                             //   final cred = PhoneAuthProvider.credential(
                             //       verificationId: widget.verificationId,
@@ -173,42 +189,38 @@ class _OtpVerificationState extends State<OtpVerification> {
                             ),
                             backgroundColor: AppColors.buttonblue,
                           ),
-                          child:
-                              // state is AuthLoading
-                              //     ? const CircularProgressIndicator(
-                              //         color: Colors.white,
-                              //       )
-                              // :
-                              Text(
-                            "Verify",
-                            style: theme.textTheme.bodyMedium!.copyWith(
-                              color: AppColors.textColorWhite,
-                              fontSize: 17,
-                              fontWeight: FontWeight.w400,
-                            ),
-                          ),
+                          child: state is AuthLoading
+                              ? const LoadingWidget()
+                              : Text(
+                                  "Verify",
+                                  style: theme.textTheme.bodyMedium!.copyWith(
+                                    color: AppColors.textColorWhite,
+                                    fontSize: 17,
+                                    fontWeight: FontWeight.w400,
+                                  ),
+                                ),
                         ),
                       ),
 
-                      Padding(
-                        padding: const EdgeInsets.only(top: 3),
-                        child: Align(
-                          alignment: Alignment.bottomRight,
-                          child: TextButton(
-                            onPressed: () {
-                              // Logic to resend OTP can be implemented here
-                            },
-                            child: Text(
-                              "Resend code",
-                              style: theme.textTheme.bodyMedium!.copyWith(
-                                color: AppColors.textColorblue,
-                                fontSize: 17,
-                                fontWeight: FontWeight.w400,
-                              ),
-                            ),
-                          ),
-                        ),
-                      )
+                      // Padding(
+                      //   padding: const EdgeInsets.only(top: 3),
+                      //   child: Align(
+                      //     alignment: Alignment.bottomRight,
+                      //     child: TextButton(
+                      //       onPressed: () {
+                      //         // Logic to resend OTP can be implemented here
+                      //       },
+                      //       child: Text(
+                      //         "Resend code",
+                      //         style: theme.textTheme.bodyMedium!.copyWith(
+                      //           color: AppColors.textColorblue,
+                      //           fontSize: 17,
+                      //           fontWeight: FontWeight.w400,
+                      //         ),
+                      //       ),
+                      //     ),
+                      //   ),
+                      // )
                     ],
                   ),
                 ),

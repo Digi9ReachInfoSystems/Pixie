@@ -74,9 +74,12 @@ class AudioRecorded extends StoryState {
 
 class AudioStopped extends StoryState {
   final String audioPath;
- 
 
-  AudioStopped({required this.audioPath, });
+  AudioStopped({required this.audioPath});
+}
+
+class Stopplayingstate extends StoryState {
+  const Stopplayingstate();
 }
 
 class AudioUploading extends StoryState {}

@@ -7,6 +7,8 @@ import 'package:pixieapp/const/colors.dart';
 import 'package:go_router/go_router.dart';
 import 'package:pixieapp/widgets/add_charactor_story.dart';
 import 'package:pixieapp/widgets/add_favorites_bottomsheet.dart';
+import 'package:pixieapp/widgets/add_loved_ones_bottomsheet.dart';
+import 'package:pixieapp/widgets/analytics.dart';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
@@ -36,6 +38,10 @@ class _ProfilePageState extends State<ProfilePage>
     _tabController = TabController(length: 2, vsync: this);
     _fetchUserData();
     _nameController = TextEditingController(text: childName);
+    AnalyticsService.logScreenView(
+      screenName: '/profilePage',
+      screenClass: 'Profile Screen',
+    );
   }
 
   Future<void> _fetchUserData() async {
@@ -70,13 +76,13 @@ class _ProfilePageState extends State<ProfilePage>
                 case 'Father':
                   fatherName = name;
                   break;
-                case 'Grand mother':
+                case 'Grandmother':
                   grandMotherName = name;
                   break;
-                case 'Grand father':
+                case 'Grandfather':
                   grandFatherName = name;
                   break;
-                case 'Female friend':
+                case 'Younger Sister':
                   petDogName = name;
                   break;
                 default:
@@ -110,7 +116,7 @@ class _ProfilePageState extends State<ProfilePage>
             decoration: InputDecoration(
               focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(8),
-                  borderSide: BorderSide(color: AppColors.kpurple)),
+                  borderSide: const BorderSide(color: AppColors.kpurple)),
               hintText: "Update your name",
               hintStyle: theme.textTheme.bodyMedium,
             ),
@@ -153,46 +159,72 @@ class _ProfilePageState extends State<ProfilePage>
     DateTime selectedDate = DateTime.now();
 
     showModalBottomSheet(
+      backgroundColor: AppColors.bottomSheetBackground,
       context: context,
       builder: (BuildContext context) {
         return Container(
-          height: 350,
           child: Column(
+            mainAxisSize: MainAxisSize.min,
             children: [
               SizedBox(
                 height: 200,
-                child: CupertinoDatePicker(
-                  maximumYear: DateTime.now().year,
-                  minimumYear: 2000,
-                  initialDateTime: selectedDate,
-                  mode: CupertinoDatePickerMode.date,
-                  onDateTimeChanged: (DateTime newDate) {
-                    setState(() {
-                      selectedDate = newDate;
-                    });
-                  },
+                child: CupertinoTheme(
+                  data: const CupertinoThemeData(
+                    textTheme: CupertinoTextThemeData(
+                      dateTimePickerTextStyle: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.w400,
+                        color: AppColors.textColorblue,
+                      ),
+                    ),
+                  ),
+                  child: CupertinoDatePicker(
+                    maximumYear: DateTime.now().year,
+                    minimumYear: 2000,
+                    initialDateTime: selectedDate,
+                    mode: CupertinoDatePickerMode.date,
+                    onDateTimeChanged: (DateTime newDate) {
+                      setState(() {
+                        selectedDate = newDate;
+                      });
+                    },
+                  ),
                 ),
               ),
               const SizedBox(
                 height: 20,
               ),
-              ElevatedButton(
-                onPressed: () async {
-                  await FirebaseFirestore.instance
-                      .collection('users')
-                      .doc(user?.uid)
-                      .update({
-                    'dob': selectedDate,
-                  });
+              SizedBox(
+                width: MediaQuery.of(context).size.width * .9,
+                child: ElevatedButton(
+                  onPressed: () async {
+                    await FirebaseFirestore.instance
+                        .collection('users')
+                        .doc(user?.uid)
+                        .update({
+                      'dob': selectedDate,
+                    });
 
-                  setState(() {
-                    dateOfBirth = DateFormat('dd/MM/yyyy').format(selectedDate);
-                  });
+                    setState(() {
+                      dateOfBirth =
+                          DateFormat('dd/MM/yyyy').format(selectedDate);
+                    });
 
-                  Navigator.of(context).pop();
-                },
-                child: const Text('Update'),
+                    Navigator.of(context).pop();
+                  },
+                  style: ElevatedButton.styleFrom(
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(40),
+                      ),
+                      backgroundColor: AppColors.buttonblue),
+                  child: const Text(
+                    'Update',
+                    style: TextStyle(
+                        color: AppColors.textColorWhite, fontSize: 20),
+                  ),
+                ),
               ),
+              const SizedBox(height: 20),
             ],
           ),
         );
@@ -307,24 +339,38 @@ class _ProfilePageState extends State<ProfilePage>
   }
 
   void _showDeleteAccountDialog(BuildContext context) {
+    final theme = Theme.of(context);
     showDialog(
       context: context,
       builder: (BuildContext context) {
         TextEditingController reasonController = TextEditingController();
         return AlertDialog(
-          title: const Text("Delete Account"),
+          backgroundColor: AppColors.bottomSheetBackground,
+          shape: RoundedRectangleBorder(
+            borderRadius:
+                BorderRadius.circular(12), // Set the border radius here
+          ),
+          title: Text("Delete Account",
+              style: theme.textTheme.bodyLarge!.copyWith(fontSize: 20)),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Text("Are you sure you want to delete your account?"),
+              Text("Are you sure you want to delete your account?",
+                  style: theme.textTheme.bodyMedium!.copyWith(fontSize: 16)),
               const SizedBox(height: 10),
               TextField(
                 textCapitalization: TextCapitalization.sentences,
+                cursorColor: AppColors.kpurple,
                 maxLines: null,
                 controller: reasonController,
                 decoration: const InputDecoration(
-                  labelText: "Reason for deletion",
-                  border: OutlineInputBorder(),
+                  hintText: "Reason for deletion",
+                  focusedBorder: OutlineInputBorder(
+                      borderSide:
+                          BorderSide(color: AppColors.backgrountdarkpurple)),
+                  border: OutlineInputBorder(
+                      borderSide:
+                          BorderSide(color: AppColors.backgrountdarkpurple)),
                 ),
               ),
             ],
@@ -334,14 +380,16 @@ class _ProfilePageState extends State<ProfilePage>
               onPressed: () {
                 Navigator.of(context).pop();
               },
-              child: const Text("Cancel"),
+              child: Text("Cancel",
+                  style: theme.textTheme.bodyLarge!.copyWith(fontSize: 16)),
             ),
             TextButton(
               onPressed: () {
                 _deleteAccount(reasonController.text);
                 Navigator.of(context).pop();
               },
-              child: const Text("Delete"),
+              child: Text("Delete",
+                  style: theme.textTheme.bodyLarge!.copyWith(fontSize: 16)),
             ),
           ],
         );
@@ -357,7 +405,17 @@ class _ProfilePageState extends State<ProfilePage>
         'reason': reason,
         'deleted_at': Timestamp.now(),
       });
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+            content: Text(
+                "Your account deletion request has been sent successfully.")),
+      );
     } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+            content: Text(
+                "Failed to send account deletion request. Please try again later or contact support if the issue persists.")),
+      );
       print("Error deleting account: $e");
     }
   }
@@ -383,7 +441,7 @@ class _ProfilePageState extends State<ProfilePage>
             decoration: InputDecoration(
               focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(8),
-                  borderSide: BorderSide(color: AppColors.kpurple)),
+                  borderSide: const BorderSide(color: AppColors.kpurple)),
               hintText: "Update name",
               hintStyle: theme.textTheme.bodyMedium,
             ),
@@ -435,13 +493,113 @@ class _ProfilePageState extends State<ProfilePage>
                     case 'Father':
                       fatherName = _familyController.text;
                       break;
-                    case 'Grand mother':
+                    case 'Grandmother':
                       grandMotherName = _familyController.text;
                       break;
-                    case 'Grand father':
+                    case 'Grandfather':
                       grandFatherName = _familyController.text;
                       break;
-                    case 'Female friend':
+                    case 'Younger Sister':
+                      petDogName = _familyController.text;
+                      break;
+                  }
+                });
+
+                Navigator.of(context).pop();
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _editFamilyMoreName(String relation, String name) {
+    final theme = Theme.of(context);
+    _familyController.clear();
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          backgroundColor: AppColors.kwhiteColor,
+          title: Text(
+            "Edit name",
+            style: theme.textTheme.bodyMedium,
+          ),
+          content: TextField(
+            textCapitalization: TextCapitalization.sentences,
+            style: theme.textTheme.bodyMedium,
+            cursorColor: AppColors.kpurple,
+            controller: _familyController,
+            decoration: InputDecoration(
+              focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: const BorderSide(color: AppColors.kpurple)),
+              hintText: "Update name",
+              hintStyle: theme.textTheme.bodyMedium,
+            ),
+          ),
+          actions: [
+            TextButton(
+              child: Text(
+                "Cancel",
+                style: theme.textTheme.bodyMedium,
+              ),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+            TextButton(
+              child: Text(
+                "Save",
+                style: theme.textTheme.bodyMedium,
+              ),
+              onPressed: () async {
+                DocumentSnapshot userDoc = await FirebaseFirestore.instance
+                    .collection('users')
+                    .doc(user?.uid)
+                    .get();
+                Map<String, dynamic> userData =
+                    userDoc.data() as Map<String, dynamic>;
+
+                List lovedOnes = userData['loved_once'] ?? [];
+                List moreLovedOnes = userData['moreLovedOnes'] ?? [];
+                for (var lovedOne in lovedOnes) {
+                  if (lovedOne['relation'] == relation) {
+                    lovedOne['name'] = _familyController.text;
+                    break;
+                  }
+                }
+                for (var morelovedOne in moreLovedOnes) {
+                  if (morelovedOne['relation'] == relation) {
+                    morelovedOne['name'] = _familyController.text;
+                    break;
+                  }
+                }
+
+                await FirebaseFirestore.instance
+                    .collection('users')
+                    .doc(user?.uid)
+                    .update({
+                  'loved_once': lovedOnes,
+                  'moreLovedOnes': moreLovedOnes
+                });
+
+                setState(() {
+                  switch (relation) {
+                    case 'Mother':
+                      motherName = _familyController.text;
+                      break;
+                    case 'Father':
+                      fatherName = _familyController.text;
+                      break;
+                    case 'Grandmother':
+                      grandMotherName = _familyController.text;
+                      break;
+                    case 'Grandfather':
+                      grandFatherName = _familyController.text;
+                      break;
+                    case 'Younger Sister':
                       petDogName = _familyController.text;
                       break;
                   }
@@ -692,11 +850,22 @@ class _ProfilePageState extends State<ProfilePage>
                                               isScrollControlled: true,
                                               backgroundColor:
                                                   Colors.transparent,
-                                              enableDrag: false,
+                                              enableDrag: true,
                                               context: context,
                                               builder: (context) {
-                                                return const AddCharactorStory(
-                                                  titleown: true,
+                                                return GestureDetector(
+                                                  onTap: () =>
+                                                      FocusScope.of(context)
+                                                          .unfocus(),
+                                                  child: Padding(
+                                                    padding:
+                                                        MediaQuery.viewInsetsOf(
+                                                            context),
+                                                    child:
+                                                        const AddCharactorStory(
+                                                      titleown: true,
+                                                    ),
+                                                  ),
                                                 );
                                               },
                                             );
@@ -764,48 +933,54 @@ class _ProfilePageState extends State<ProfilePage>
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text(
-          title,
-          style:
-              theme.textTheme.bodyMedium!.copyWith(fontWeight: FontWeight.w400),
-        ),
-        Container(
-          padding: const EdgeInsets.only(left: 10),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(8),
-            color: AppColors.kwhiteColor,
+        Expanded(
+          flex: 2,
+          child: Text(
+            title,
+            style: theme.textTheme.bodyMedium!
+                .copyWith(fontWeight: FontWeight.w400),
           ),
-          width: MediaQuery.of(context).size.width * 0.5555,
-          height: 48,
-          child: Center(
-            child: Row(
-              children: [
-                Expanded(
-                  child: TextField(
-                    textCapitalization: TextCapitalization.sentences,
-                    controller: TextEditingController(text: detailAnswer),
-                    enabled: false,
-                    style: theme.textTheme.bodyMedium?.copyWith(
-                      fontWeight: FontWeight.w400,
-                    ),
-                    decoration: const InputDecoration(
-                      contentPadding: EdgeInsets.only(left: 15),
-                      border: InputBorder.none,
-                      focusedBorder: InputBorder.none,
-                      errorBorder: InputBorder.none,
-                      focusedErrorBorder: InputBorder.none,
-                      disabledBorder: InputBorder.none,
-                      enabledBorder: InputBorder.none,
-                      fillColor: AppColors.kwhiteColor,
-                      focusColor: AppColors.textColorblue,
+        ),
+        Expanded(
+          flex: 3,
+          child: Container(
+            padding: const EdgeInsets.only(left: 10),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(8),
+              color: AppColors.kwhiteColor,
+            ),
+            width: MediaQuery.of(context).size.width * 0.5555,
+            height: 48,
+            child: Center(
+              child: Row(
+                children: [
+                  Expanded(
+                    child: TextField(
+                      textCapitalization: TextCapitalization.sentences,
+                      controller: TextEditingController(text: detailAnswer),
+                      enabled: false,
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        fontWeight: FontWeight.w400,
+                      ),
+                      decoration: const InputDecoration(
+                        contentPadding: EdgeInsets.only(left: 15),
+                        border: InputBorder.none,
+                        focusedBorder: InputBorder.none,
+                        errorBorder: InputBorder.none,
+                        focusedErrorBorder: InputBorder.none,
+                        disabledBorder: InputBorder.none,
+                        enabledBorder: InputBorder.none,
+                        fillColor: AppColors.kwhiteColor,
+                        focusColor: AppColors.textColorblue,
+                      ),
                     ),
                   ),
-                ),
-                IconButton(
-                  icon: const Icon(Icons.edit),
-                  onPressed: onpressed,
-                ),
-              ],
+                  IconButton(
+                    icon: const Icon(Icons.edit),
+                    onPressed: onpressed,
+                  ),
+                ],
+              ),
             ),
           ),
         ),
@@ -816,50 +991,183 @@ class _ProfilePageState extends State<ProfilePage>
   Widget profileFamilyTab() {
     final deviceWidth = MediaQuery.of(context).size.width;
     final theme = Theme.of(context);
-    return Padding(
-      padding: const EdgeInsets.all(20.0),
-      child: Column(
-        children: [
-          detailsChild(
-              'Mother', motherName ?? ' ', () => _editFamilyName('Mother')),
-          const SizedBox(height: 20),
-          detailsChild(
-              'Father', fatherName ?? ' ', () => _editFamilyName('Father')),
-          const SizedBox(height: 20),
-          detailsChild('Grand mother', grandMotherName ?? ' ',
-              () => _editFamilyName('Grand mother')),
-          const SizedBox(height: 20),
-          detailsChild('Grand father', grandFatherName ?? '',
-              () => _editFamilyName('Grand father')),
-          const SizedBox(height: 20),
-          detailsChild('Female friend', petDogName ?? '',
-              () => _editFamilyName('Female friend')),
-          const Spacer(),
-          Padding(
-            padding: const EdgeInsets.only(bottom: 20.0),
-            child: ElevatedButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-              style: ElevatedButton.styleFrom(
-                minimumSize: Size(deviceWidth, 50),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                backgroundColor: AppColors.kwhiteColor,
-              ),
-              child: Text(
-                "Save",
-                style: theme.textTheme.bodyLarge!.copyWith(
-                  color: AppColors.textColorblue,
-                  fontSize: 20,
-                  fontWeight: FontWeight.w400,
-                ),
+    return Column(
+      children: [
+        Expanded(
+          child: Padding(
+            padding: const EdgeInsets.all(20.0),
+            child: SingleChildScrollView(
+              child: Column(
+                children: [
+                  detailsChild('Mother', motherName ?? ' ',
+                      () => _editFamilyName('Mother')),
+                  const SizedBox(height: 20),
+                  detailsChild('Father', fatherName ?? ' ',
+                      () => _editFamilyName('Father')),
+                  const SizedBox(height: 20),
+                  detailsChild('Grandmother', grandMotherName ?? ' ',
+                      () => _editFamilyName('Grandmother')),
+                  const SizedBox(height: 20),
+                  detailsChild('Grandfather', grandFatherName ?? '',
+                      () => _editFamilyName('Grandfather')),
+                  const SizedBox(height: 20),
+                  detailsChild('Younger Sister', petDogName ?? '',
+                      () => _editFamilyName('Younger Sister')),
+                  const SizedBox(height: 20),
+                  StreamBuilder<DocumentSnapshot>(
+                    stream: FirebaseFirestore.instance
+                        .collection('users')
+                        .doc(user?.uid)
+                        .snapshots(),
+                    builder: (context, snapshot) {
+                      if (snapshot.connectionState == ConnectionState.waiting) {
+                        return const Center(child: CircularProgressIndicator());
+                      }
+
+                      if (!snapshot.hasData || snapshot.data == null) {
+                        return const Center(child: Text("No data found"));
+                      }
+
+                      var data = snapshot.data!.data() as Map<String, dynamic>;
+                      var moreLovedOnes =
+                          data['moreLovedOnes'] as List<dynamic>?;
+
+                      if (moreLovedOnes == null || moreLovedOnes.isEmpty) {
+                        return const Center(child: Text(""));
+                      }
+
+                      return Column(
+                        children: moreLovedOnes.map((lovedOne) {
+                          String relationName = lovedOne['relation'] ?? '';
+                          String name = lovedOne['name'] ?? '';
+
+                          return Padding(
+                            padding: const EdgeInsets.only(bottom: 20.0),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              crossAxisAlignment: CrossAxisAlignment.center,
+                              children: [
+                                Expanded(
+                                  flex: 2,
+                                  child: Text(
+                                    relationName,
+                                    maxLines: 2,
+                                    style: theme.textTheme.bodyMedium!.copyWith(
+                                      color: AppColors.textColorblack,
+                                      fontWeight: FontWeight.w400,
+                                    ),
+                                  ),
+                                ),
+                                Expanded(
+                                  flex: 3,
+                                  child: Container(
+                                    padding: const EdgeInsets.only(
+                                        left: 20, right: 10),
+                                    decoration: BoxDecoration(
+                                      borderRadius: BorderRadius.circular(8),
+                                      color: AppColors.kwhiteColor,
+                                    ),
+                                    width: deviceWidth * 0.5555,
+                                    height: 48,
+                                    child: Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.spaceBetween,
+                                      children: [
+                                        Align(
+                                          alignment: Alignment.centerLeft,
+                                          child: Text(
+                                            name,
+                                            style: theme.textTheme.bodyMedium!
+                                                .copyWith(
+                                              color: AppColors.textColorblack,
+                                              fontWeight: FontWeight.w400,
+                                            ),
+                                          ),
+                                        ),
+                                        IconButton(
+                                          icon: const Icon(Icons.edit),
+                                          onPressed: () => _editFamilyMoreName(
+                                              relationName, name),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          );
+                        }).toList(),
+                      );
+                    },
+                  ),
+                  const SizedBox(height: 20),
+                  GestureDetector(
+                    onTap: () async {
+                      await showModalBottomSheet(
+                        isScrollControlled: true,
+                        backgroundColor: Colors.transparent,
+                        enableDrag: false,
+                        context: context,
+                        builder: (context) {
+                          return const AddLovedOnesBottomSheet();
+                        },
+                      );
+                    },
+                    child: Padding(
+                      padding: const EdgeInsets.only(top: 10.0),
+                      child: Container(
+                          width: deviceWidth,
+                          height: 47,
+                          decoration: BoxDecoration(
+                              border: Border.all(
+                                  color:
+                                      const Color.fromARGB(255, 178, 178, 178)),
+                              borderRadius: BorderRadius.circular(40)),
+                          child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              crossAxisAlignment: CrossAxisAlignment.center,
+                              children: [
+                                const Icon(
+                                  Icons.add,
+                                  color: AppColors.textColorblack,
+                                  size: 20,
+                                ),
+                                const SizedBox(width: 10),
+                                Text('Add a loved one',
+                                    style: theme.textTheme.bodyMedium!
+                                        .copyWith(fontWeight: FontWeight.w500)),
+                              ])),
+                    ),
+                  ),
+                ],
               ),
             ),
           ),
-        ],
-      ),
+        ),
+        Padding(
+          padding: const EdgeInsets.only(bottom: 20.0),
+          child: ElevatedButton(
+            onPressed: () {
+              Navigator.of(context).pop();
+            },
+            style: ElevatedButton.styleFrom(
+              minimumSize: Size(deviceWidth * 0.85, 50),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(20),
+              ),
+              backgroundColor: AppColors.kwhiteColor,
+            ),
+            child: Text(
+              "Save",
+              style: theme.textTheme.bodyLarge!.copyWith(
+                color: AppColors.textColorblue,
+                fontSize: 20,
+                fontWeight: FontWeight.w400,
+              ),
+            ),
+          ),
+        ),
+      ],
     );
   }
 }

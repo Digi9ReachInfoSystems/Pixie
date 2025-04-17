@@ -21,16 +21,16 @@ import 'package:pixieapp/widgets/loading_widget.dart';
 import 'package:pixieapp/widgets/navbar2.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
 
-class Firebasestory extends StatefulWidget {
+class Firebasestorylibrary extends StatefulWidget {
   final DocumentReference<Object?> storyDocRef;
 
-  const Firebasestory({super.key, required this.storyDocRef});
+  const Firebasestorylibrary({super.key, required this.storyDocRef});
 
   @override
-  _FirebasestoryState createState() => _FirebasestoryState();
+  _FirebasestorylibraryState createState() => _FirebasestorylibraryState();
 }
 
-class _FirebasestoryState extends State<Firebasestory> {
+class _FirebasestorylibraryState extends State<Firebasestorylibrary> {
   Map<String, dynamic>? storyData;
   File? audioFile;
   String? audioUrl;
@@ -125,8 +125,8 @@ class _FirebasestoryState extends State<Firebasestory> {
                     onPressed: () {
                       context.read<StoryBloc>().add(StopplayingEvent());
                       context.read<AddCharacterBloc>().add(ResetStateEvent());
-                      context.read<NavBarBloc>().add(const NavBarItemTapped(0));
-                      context.go('/HomePage');
+
+                      context.go('/Library');
                     },
                   ),
                 ),

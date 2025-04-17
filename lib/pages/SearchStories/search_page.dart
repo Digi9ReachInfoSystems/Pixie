@@ -73,28 +73,39 @@ class _SearchPageState extends State<SearchPage> {
             Padding(
               padding: const EdgeInsets.all(15.0),
               child: TextField(
+                cursorColor: AppColors.kpurple,
                 textCapitalization: TextCapitalization.sentences,
                 controller: _searchcontroller,
                 decoration: InputDecoration(
-                    prefixIcon: Padding(
-                      padding: const EdgeInsets.all(10.0),
-                      child: SvgPicture.asset(
-                        'assets/images/search.svg',
-                        width: 10,
-                        height: 10,
-                      ),
+                  prefixIcon: Padding(
+                    padding: const EdgeInsets.all(10.0),
+                    child: SvgPicture.asset(
+                      'assets/images/search.svg',
+                      width: 10,
+                      height: 10,
                     ),
-                    hintText: 'Search',
-                    hintStyle: theme.textTheme.bodySmall!.copyWith(
-                        color: AppColors.kblackColor,
-                        fontSize: 13,
-                        fontWeight: FontWeight.w400),
-                    contentPadding: const EdgeInsets.only(left: 15),
-                    border: const OutlineInputBorder(
-                        borderSide: BorderSide(color: AppColors.kpurple)),
-                    fillColor: AppColors.kwhiteColor,
-                    focusColor: AppColors.textColorblue,
-                    filled: true),
+                  ),
+                  hintText: 'Search',
+                  hintStyle: theme.textTheme.bodySmall!.copyWith(
+                    color: AppColors.kblackColor,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w400,
+                  ),
+                  contentPadding: const EdgeInsets.only(left: 15),
+                  border: const OutlineInputBorder(
+                    borderRadius: BorderRadius.all(Radius.circular(13)),
+                    borderSide: BorderSide(color: AppColors.kpurple),
+                  ),
+                  focusedBorder: const OutlineInputBorder(
+                    borderRadius: BorderRadius.all(Radius.circular(13)),
+                    borderSide: BorderSide(
+                        color: AppColors.kpurple,
+                        width: 2), // Purple border when focused
+                  ),
+                  fillColor: AppColors.kwhiteColor,
+                  focusColor: AppColors.textColorblue,
+                  filled: true,
+                ),
               ),
             ),
             Expanded(
@@ -141,6 +152,7 @@ class _SearchPageState extends State<SearchPage> {
                           padding: const EdgeInsets.symmetric(
                               horizontal: 15, vertical: 10),
                           child: storylistCard(
+                            genre: story['genre'] ?? 'Funny',
                             theme: theme,
                             title: story['title'],
                             storytype: story['storytype'],
@@ -173,6 +185,7 @@ class _SearchPageState extends State<SearchPage> {
   }
 
   Widget storylistCard({
+    required String genre,
     required ThemeData theme,
     required String title,
     required String storytype,
@@ -206,7 +219,19 @@ class _SearchPageState extends State<SearchPage> {
                     )
                   ],
                 ),
-                child: Image.asset('assets/images/star.png'),
+                child: genre == "Surprise me"
+                    ? Image.asset(
+                        'assets/images/surpriceme.png',
+                      )
+                    : genre == "Funny"
+                        ? Image.asset('assets/images/FUNNY.png')
+                        : genre == "Horror"
+                            ? Image.asset('assets/images/HORROR.png')
+                            : genre == "Adventure"
+                                ? Image.asset('assets/images/adventure.png')
+                                : genre == "Action"
+                                    ? Image.asset('assets/images/Action.png')
+                                    : Image.asset('assets/images/ScI-Fi.png'),
               ),
             ),
             const SizedBox(width: 10),

@@ -27,3 +27,5 @@ class RelationAdded extends IntroductionEvent {
   final String relationName;
   RelationAdded({required this.relation, required this.relationName});
 }
+
+class loadingEvent extends IntroductionEvent {}

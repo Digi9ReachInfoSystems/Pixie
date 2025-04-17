@@ -78,9 +78,13 @@ class _LovedonceBottomsheetState extends State<LovedonceBottomsheet> {
                                         lovedOnceList[index].relation ==
                                             "Father" ||
                                         lovedOnceList[index].relation ==
-                                            "Grand father" ||
+                                            "Grandfather" ||
                                         lovedOnceList[index].relation ==
-                                            "Grand mother")
+                                            "Grandmother" ||
+                                        lovedOnceList[index].relation ==
+                                            'Maternal Grandfather' ||
+                                        lovedOnceList[index].relation ==
+                                            "Maternal Grandmother")
                                     ? lovedOnceList[index].relation
                                     : lovedOnceList[index].name,
                                 style: TextStyle(
@@ -115,5 +119,9 @@ Future<List<Lovedonces>> fetchLovedOnes() async {
       await FirebaseFirestore.instance.collection('users').doc(user.uid).get();
   List<dynamic> lovedOnceData = doc['loved_once'] ?? [];
 
-  return lovedOnceData.map((item) => Lovedonces.fromMap(item)).toList();
+  return lovedOnceData
+      .where(
+          (item) => item['name'] != null && item['name'].toString().isNotEmpty)
+      .map((item) => Lovedonces.fromMap(item))
+      .toList();
 }

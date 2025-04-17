@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
@@ -6,29 +7,89 @@ import 'package:pixieapp/blocs/StoryFeedback/story_feedback_event.dart'
 import 'package:pixieapp/blocs/StoryFeedback/story_feedback_bloc.dart';
 import 'package:pixieapp/blocs/StoryFeedback/story_feedback_event.dart';
 import 'package:pixieapp/blocs/StoryFeedback/story_feedback_state.dart';
+import 'package:pixieapp/blocs/Story_bloc/story_bloc.dart';
+import 'package:pixieapp/blocs/Story_bloc/story_event.dart';
 import 'package:pixieapp/const/colors.dart';
 
 class StoryFeedback extends StatefulWidget {
+  final DocumentReference<Object?>? documentReference;
   final String story;
   final String title;
   final String path;
   final bool textfield;
+  final bool firebasestory;
+
   const StoryFeedback(
       {super.key,
       required this.story,
       required this.title,
       required this.path,
-      this.textfield = true});
+      this.textfield = true,
+      required this.documentReference,
+      required this.firebasestory});
 
   @override
   State<StoryFeedback> createState() => _StoryFeedbackState();
 }
 
 class _StoryFeedbackState extends State<StoryFeedback> {
+  TextEditingController textcontroller = TextEditingController();
+  int initialRating = 0;
+  List<String> initialIssues = [];
+  String initialCustomIssue = '';
+
+  @override
+  void dispose() {
+    textcontroller.dispose();
+    super.dispose();
+  }
+
+  Future<void> fetchInitialFeedback() async {
+    if (widget.documentReference != null) {
+      final docSnapshot = await widget.documentReference!.get();
+
+      if (docSnapshot.exists) {
+        final feedbackRefId = docSnapshot['feedback_ref'] as String?;
+        if (feedbackRefId != null) {
+          final feedbackRef = FirebaseFirestore.instance
+              .collection('story_feedback')
+              .doc(feedbackRefId);
+
+          final feedbackSnapshot = await feedbackRef.get();
+
+          if (feedbackSnapshot.exists) {
+            final feedbackData =
+                feedbackSnapshot.data() as Map<String, dynamic>;
+            setState(() {
+              initialRating = feedbackData['rating'] ?? 0;
+              initialIssues = List<String>.from(feedbackData['issues'] ?? []);
+              initialCustomIssue = feedbackData['customIssue'] ?? '';
+              textcontroller.text = initialCustomIssue;
+            });
+
+            context.read<StoryFeedbackBloc>().add(
+                  StoryFeedbackEvent.UpdateInitialFeedbackEvent(
+                      rating: initialRating,
+                      issues: initialIssues,
+                      customIssue: initialCustomIssue,
+                      liked: false,
+                      dislike: true),
+                );
+          }
+        }
+      }
+    }
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    fetchInitialFeedback();
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    TextEditingController textcontroller = TextEditingController();
 
     return BlocBuilder<StoryFeedbackBloc, StoryFeedbackState>(
       builder: (context, state) {
@@ -65,7 +126,6 @@ class _StoryFeedbackState extends State<StoryFeedback> {
                   ),
                   child: SingleChildScrollView(
                     child: Column(
-                      // mainAxisAlignment: MainAxisAlignment.spaceAround,
                       children: [
                         const SizedBox(height: 10),
                         Text(
@@ -77,24 +137,31 @@ class _StoryFeedbackState extends State<StoryFeedback> {
                           ),
                         ),
                         const SizedBox(height: 10),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: List.generate(5, (index) {
-                            return IconButton(
-                              onPressed: () {
-                                context.read<StoryFeedbackBloc>().add(
-                                    StoryFeedbackEvent.UpdateRatingEvent(
-                                        index + 1));
-                              },
-                              icon: Icon(
-                                state.rating > index
-                                    ? Icons.star_rate_rounded
-                                    : Icons.star_border_rounded,
-                                color: AppColors.kpurple,
-                                size: 50,
-                              ),
-                            );
-                          }),
+                        Padding(
+                          padding: const EdgeInsets.only(left: 20.0, right: 20),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: List.generate(5, (index) {
+                              return Expanded(
+                                flex: 1,
+                                child: IconButton(
+                                  onPressed: () {
+                                    context.read<StoryFeedbackBloc>().add(
+                                          StoryFeedbackEvent.UpdateRatingEvent(
+                                              index + 1),
+                                        );
+                                  },
+                                  icon: Icon(
+                                    state.rating > index
+                                        ? Icons.star_rate_rounded
+                                        : Icons.star_border_rounded,
+                                    color: AppColors.kpurple,
+                                    size: 50,
+                                  ),
+                                ),
+                              );
+                            }),
+                          ),
                         ),
                         const SizedBox(height: 10),
                         Text(
@@ -121,15 +188,16 @@ class _StoryFeedbackState extends State<StoryFeedback> {
                                   label: Text(
                                     issue,
                                     style: TextStyle(
-                                        color: state.issues.contains(issue)
-                                            ? AppColors.textColorWhite
-                                            : AppColors.textColorblack),
+                                      color: state.issues.contains(issue)
+                                          ? AppColors.textColorWhite
+                                          : AppColors.textColorblack,
+                                    ),
                                   ),
                                   selected: state.issues.contains(issue),
                                   onSelected: (selected) {
-                                    context
-                                        .read<StoryFeedbackBloc>()
-                                        .add(ToggleIssueEvent(issue));
+                                    context.read<StoryFeedbackBloc>().add(
+                                          ToggleIssueEvent(issue),
+                                        );
                                   },
                                   selectedColor: AppColors.kpurple,
                                   backgroundColor: AppColors.kwhiteColor,
@@ -141,13 +209,21 @@ class _StoryFeedbackState extends State<StoryFeedback> {
                         const SizedBox(height: 10),
                         widget.textfield
                             ? TextField(
+                                onChanged: (value) {
+                                  context
+                                      .read<StoryFeedbackBloc>()
+                                      .add(CustomIssueEvent(value));
+                                },
+                                cursorColor: AppColors.kpurple,
                                 textCapitalization:
                                     TextCapitalization.sentences,
                                 controller: textcontroller,
                                 minLines: 3,
                                 maxLines: 10,
                                 decoration: InputDecoration(
-                                  hintText: 'Type in case other',
+                                  hintText: initialCustomIssue.isEmpty
+                                      ? 'Type in case other'
+                                      : initialCustomIssue,
                                   filled: true,
                                   fillColor: Colors.white,
                                   border: OutlineInputBorder(
@@ -189,33 +265,33 @@ class _StoryFeedbackState extends State<StoryFeedback> {
                                   foregroundColor: AppColors.kpurple,
                                   backgroundColor: AppColors.kpurple),
                               onPressed: () {
-                                if (textcontroller.text.isNotEmpty &&
-                                    widget.textfield == true) {
-                                  context.read<StoryFeedbackBloc>().add(
-                                      AddCustomIssueEvent(textcontroller.text));
-                                  context.read<StoryFeedbackBloc>().add(
+                                context.read<StoryFeedbackBloc>().add(
                                       StoryFeedbackEvent.SubmitFeedbackEvent(
-                                          audiopath: widget.path,
-                                          story: widget.story,
-                                          story_title: widget.title));
-                                  context.read<StoryFeedbackBloc>().add(
-                                      const UpdatedislikeStateEvent(
-                                          isDisliked: true));
+                                        documentReference:
+                                            widget.documentReference,
+                                        audiopath: widget.path,
+                                        story: widget.story,
+                                        story_title: widget.title,
+                                      ),
+                                    );
+                                if (widget.firebasestory) {
+                                  context
+                                      .read<StoryBloc>()
+                                      .add(StopplayingEvent());
+                                  Future.delayed(const Duration(seconds: 1),
+                                      () {
+                                    context.push('/Firebasestory1',
+                                        extra: widget.documentReference);
+                                  });
                                 } else {
-                                  context.read<StoryFeedbackBloc>().add(
-                                      StoryFeedbackEvent.SubmitFeedbackEvent(
-                                          audiopath: widget.path,
-                                          story: widget.story,
-                                          story_title: widget.title));
-                                  context.read<StoryFeedbackBloc>().add(
-                                      const UpdatedislikeStateEvent(
-                                          isDisliked: true));
                                   context.pop();
                                 }
+
                                 ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(
-                                        content: Text(
-                                            "Thank you for your feedback")));
+                                  const SnackBar(
+                                      content:
+                                          Text("Thank you for your feedback")),
+                                );
                               },
                               child: Text(
                                 'Submit',

@@ -5,6 +5,7 @@ import 'package:pixieapp/blocs/Auth_bloc/auth_bloc.dart';
 import 'package:pixieapp/blocs/Auth_bloc/auth_state.dart';
 import 'package:pixieapp/const/colors.dart';
 import 'package:go_router/go_router.dart';
+import 'package:pixieapp/widgets/analytics.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -18,6 +19,10 @@ class _SplashScreenState extends State<SplashScreen> {
   void initState() {
     super.initState();
     _navigateAfterDelay();
+    AnalyticsService.logScreenView(
+      screenName: '/splashScreen',
+      screenClass: 'Splash Screen',
+    );
   }
 
   // Navigate after a delay

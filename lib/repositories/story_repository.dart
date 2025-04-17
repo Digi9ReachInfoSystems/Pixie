@@ -12,7 +12,7 @@ class StoryRepository {
 
   Future<Map<String, String>> generateStory({
     required String event,
-    required String age,
+    required int age,
     required String topic,
     required String child_name,
     required String gender,
@@ -22,7 +22,10 @@ class StoryRepository {
     required String lessons,
     required String length,
     required String language,
+    required String character_name,
+    required String city,
   }) async {
+    print(city);
     final response = await http.post(Uri.parse(storyApiUrl),
         body: jsonEncode(
           {
@@ -37,6 +40,8 @@ class StoryRepository {
             'lessons': lessons,
             'length': 200,
             'language': language,
+            'character_name': character_name,
+            'location': city
           },
         ));
 
@@ -55,13 +60,12 @@ class StoryRepository {
   Future<File> speechToText({
     required String text,
     required String language,
+    required String event,
   }) async {
     final response = await http.post(
       Uri.parse(audioApiUrl),
-      body: jsonEncode({
-        'text': text,
-        'language': language,
-      }),
+      body: jsonEncode(
+          {'text': text, 'language': language, 'event': event.toLowerCase()}),
     );
 
     if (response.statusCode == 200) {

@@ -14,7 +14,9 @@ class AddCharacterState extends Equatable {
   final String genre;
   final String musicAndSpeed;
   final bool fav;
+  final bool dislike;
   final bool showfeedback;
+  final String characterName;
 
   const AddCharacterState(
       {required this.currentPageIndex,
@@ -25,10 +27,12 @@ class AddCharacterState extends Equatable {
       required this.genre,
       required this.musicAndSpeed,
       required this.fav,
+      required this.dislike,
       required this.showfeedback,
       this.lessons,
       this.charactorname,
-      this.lovedOnce});
+      this.lovedOnce,
+      required this.characterName});
 
   // Create a copyWith method to update specific parts of the state
   AddCharacterState copyWith(
@@ -41,9 +45,11 @@ class AddCharacterState extends Equatable {
       int? selectedindexlesson,
       int? selectedindexcharactor,
       bool? fav,
+      bool? dislike,
       bool? showfeedback,
       String? genre,
-      String? musicAndSpeed}) {
+      String? musicAndSpeed,
+      String? characterName}) {
     return AddCharacterState(
         currentPageIndex: currentPageIndex ?? this.currentPageIndex,
         language: language ?? this.language,
@@ -57,7 +63,9 @@ class AddCharacterState extends Equatable {
         genre: genre ?? this.genre,
         musicAndSpeed: musicAndSpeed ?? this.musicAndSpeed,
         fav: fav ?? this.fav,
-        showfeedback: showfeedback ?? this.showfeedback);
+        dislike: dislike ?? this.dislike,
+        showfeedback: showfeedback ?? this.showfeedback,
+        characterName: characterName ?? this.characterName);
   }
 
   @override
@@ -73,6 +81,8 @@ class AddCharacterState extends Equatable {
         genre,
         musicAndSpeed,
         fav,
-        showfeedback
+        dislike,
+        showfeedback,
+        characterName
       ];
 }

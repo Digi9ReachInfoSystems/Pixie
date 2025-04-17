@@ -10,7 +10,6 @@ import 'package:pixieapp/blocs/StoryFeedback/story_feedback_bloc.dart';
 import 'package:pixieapp/blocs/StoryFeedback/story_feedback_event.dart';
 import 'package:pixieapp/blocs/StoryFeedback/story_feedback_state.dart';
 import 'package:pixieapp/blocs/Story_bloc/story_bloc.dart';
-import 'package:pixieapp/blocs/Story_bloc/story_event.dart';
 import 'package:pixieapp/blocs/Story_bloc/story_state.dart';
 import 'package:pixieapp/blocs/add_character_Bloc.dart/add_character_bloc.dart';
 import 'package:pixieapp/blocs/add_character_Bloc.dart/add_character_event.dart';
@@ -19,35 +18,33 @@ import 'package:pixieapp/const/colors.dart';
 import 'package:pixieapp/widgets/audio_controller.dart';
 import 'package:pixieapp/widgets/story_feedback.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'package:pixieapp/widgets/analytics.dart';
 
-class NavBar2 extends StatefulWidget {
+class SuggstedStoryNavbar extends StatefulWidget {
   final DocumentReference<Object?>? documentReference;
   final File? audioFile;
   final String story;
   final String title;
   final String firebaseAudioPath;
-  final bool suggestedStories;
+
   final bool firebaseStories;
   final bool dislike;
   final bool liked;
-  const NavBar2(
+  const SuggstedStoryNavbar(
       {super.key,
       required this.documentReference,
       this.audioFile,
       required this.story,
       required this.title,
       required this.firebaseAudioPath,
-      required this.suggestedStories,
       required this.firebaseStories,
       required this.dislike,
       required this.liked});
 
   @override
-  State<NavBar2> createState() => _NavBar2State();
+  State<SuggstedStoryNavbar> createState() => _SuggstedStoryNavbarState();
 }
 
-class _NavBar2State extends State<NavBar2> {
+class _SuggstedStoryNavbarState extends State<SuggstedStoryNavbar> {
   final player = AudioPlayer();
   final GlobalKey _tooltipKey = GlobalKey();
 
@@ -61,9 +58,8 @@ class _NavBar2State extends State<NavBar2> {
   User? user = FirebaseAuth.instance.currentUser;
   bool _isPlaying = false;
   bool showfeedback = true;
-  bool isDisliked = false;
+  bool isliked = false;
   bool isDislikeddd = false;
-  bool alredayliked = false;
   bool seekInProgress = false;
   double? _tempSeekValue;
 
@@ -72,8 +68,8 @@ class _NavBar2State extends State<NavBar2> {
   @override
   void initState() {
     super.initState();
-    initialstate();
-    BlocProvider.of<StoryFeedbackBloc>(context).add(ResetFeedbackStateEvent());
+    isUserDisliked(widget.documentReference!);
+    isUserliked(widget.documentReference!);
 
     widget.firebaseStories
         ? player.setUrl(widget.firebaseAudioPath)
@@ -97,42 +93,6 @@ class _NavBar2State extends State<NavBar2> {
         player.seek(position);
       }
     });
-  }
-
-  initialstate() async {
-    if (widget.dislike) {
-      final snapshort = await widget.documentReference!.get();
-      final storydta = snapshort.data() as Map<String, dynamic>?;
-
-      context.read<StoryFeedbackBloc>().add(UpdateInitialFeedbackEvent(
-            liked: false,
-            dislike: true,
-            customIssue: '',
-            issues: [],
-            rating: 0,
-          ));
-    }
-    {
-      final snapshort = await widget.documentReference!.get();
-      final storydta = snapshort.data() as Map<String, dynamic>?;
-    }
-  }
-
-  Future<bool> _checkUpdate() async {
-    try {
-      final docSnapshot = await widget.documentReference!.get();
-      if (docSnapshot.exists) {
-        final data = docSnapshot.data() as Map<String, dynamic>?;
-        final currentAudioUrl = data?['audiofile'];
-
-        return currentAudioUrl.isEmpty;
-      } else {
-        return false;
-      }
-    } catch (e) {
-      print('Error checking audio file update: $e');
-      return false;
-    }
   }
 
   Future<void> initialfeedback() async {
@@ -231,7 +191,7 @@ class _NavBar2State extends State<NavBar2> {
         child: Container(
           width: MediaQuery.of(context).size.width,
           decoration: const BoxDecoration(
-            color: Color.fromARGB(0, 134, 7, 7),
+            color: Colors.transparent,
             borderRadius: BorderRadius.only(
                 topLeft: Radius.circular(12), topRight: Radius.circular(12)),
             image: DecorationImage(
@@ -316,38 +276,12 @@ class _NavBar2State extends State<NavBar2> {
                                 builder: (context, state) {
                           return IconButton(
                             onPressed: () async {
-                              AnalyticsService.logEvent(
-                                  eventName: 'like_story_button');
-                              if (widget.liked == false &&
-                                  alredayliked == false) {
-                                context.read<StoryFeedbackBloc>().add(
-                                    UpdateLikedEvent(
-                                        liked: true,
-                                        dislike: false,
-                                        documentReference:
-                                            widget.documentReference!));
-                                setState(() {
-                                  alredayliked = true;
-                                });
-                                context
-                                    .read<StoryBloc>()
-                                    .add(StopplayingEvent());
-                                context
-                                    .read<StoryBloc>()
-                                    .add(StopplayingEvent());
-                                context
-                                    .read<StoryBloc>()
-                                    .add(StopplayingEvent());
-                                Future.delayed(
-                                    const Duration(milliseconds: 500), () {
-                                  context.push('/Firebasestory1',
-                                      extra: widget.documentReference);
-                                });
-                              }
+                              updateFirebaseSuggested(
+                                  docRef: widget.documentReference!,
+                                  liked: true);
                             },
                             icon: SvgPicture.asset(
-                              (state.liked == true && widget.liked == true) ||
-                                      widget.liked == true
+                              isliked == true && isDislikeddd == false
                                   ? 'assets/images/afterLike.svg'
                                   : 'assets/images/beforeLike.svg',
                               width: 30,
@@ -360,43 +294,12 @@ class _NavBar2State extends State<NavBar2> {
                         builder: (context, state) {
                           return IconButton(
                             onPressed: () async {
-                              AnalyticsService.logEvent(
-                                  eventName: 'dislike_story_button');
-                              context.read<StoryFeedbackBloc>().add(
-                                  UpdateInitialFeedbackEvent(
-                                      rating: 0,
-                                      issues: [],
-                                      customIssue: "",
-                                      dislike: false,
-                                      liked: false));
-                              await showModalBottomSheet(
-                                isScrollControlled: true,
-                                backgroundColor: Colors.transparent,
-                                enableDrag: false,
-                                context: context,
-                                builder: (context) {
-                                  return GestureDetector(
-                                    onTap: () =>
-                                        FocusScope.of(context).unfocus(),
-                                    child: Padding(
-                                      padding: MediaQuery.viewInsetsOf(context),
-                                      child: StoryFeedback(
-                                        firebasestory: true,
-                                        documentReference:
-                                            widget.documentReference!,
-                                        story: widget.story,
-                                        title: widget.title,
-                                        path: widget.firebaseAudioPath,
-                                      ),
-                                    ),
-                                  );
-                                },
-                              );
+                              updateFirebaseSuggested(
+                                  docRef: widget.documentReference!,
+                                  liked: false);
                             },
                             icon: SvgPicture.asset(
-                              (state.dislike == true &&
-                                          widget.dislike == true) ||
-                                      widget.dislike == true
+                              isDislikeddd == true && isliked == false
                                   ? 'assets/images/afterDislike.svg'
                                   : 'assets/images/beforeDislike.svg',
                               width: 30,
@@ -407,8 +310,6 @@ class _NavBar2State extends State<NavBar2> {
                       ),
                       IconButton(
                         onPressed: () {
-                          AnalyticsService.logEvent(
-                              eventName: 'playpause_button');
                           handlePlayPause(state: state);
                         },
                         icon: SizedBox(
@@ -428,8 +329,6 @@ class _NavBar2State extends State<NavBar2> {
                       ),
                       IconButton(
                         onPressed: () {
-                          AnalyticsService.logEvent(
-                              eventName: 'add_to_favorites_button');
                           // Show the tooltip programmatically
                           final dynamic tooltip = _tooltipKey.currentState;
                           tooltip?.ensureTooltipVisible();
@@ -456,10 +355,8 @@ class _NavBar2State extends State<NavBar2> {
                       ),
                       IconButton(
                         onPressed: () {
-                          AnalyticsService.logEvent(
-                              eventName: 'share_story_button');
                           openWhatsAppChat(
-                              ''' 🎧Hey! Listen to the personalized story I created for my child.\n\n${widget.title}\n\n ${widget.firebaseAudioPath}\n\nYou can create such personalized audio stories for your children too! Download the app now \n For ios app:https://apps.apple.com/us/app/pixie-dream-create-inspire/id6737147663\n\n For Android app : https://play.google.com/store/apps/details?id=com.fabletronic.pixie.''');
+                              "${widget.title}\n${widget.story}\n\n Hey parent! Create personalized audio stories for your child! Introduce them to AI, inspiring them to think beyond. Pixie – their adventure buddy to reduce screentime \n\n For ios app:https://apps.apple.com/in/app/pixie-dream-create-inspire/id6737147663 \n\n For Android app : https://play.google.com/store/apps/details?id=com.fabletronic.pixie");
                         },
                         icon: SvgPicture.asset(
                           'assets/images/share.svg',
@@ -478,42 +375,11 @@ class _NavBar2State extends State<NavBar2> {
     );
   }
 
-  Future<void> updateDislikeFirebaseSuggested({
-    //  required bool fav,
-    required DocumentReference<Object?> docRef,
-  }) async {
-    // if (fav) {
-    await docRef.update({
-      'noOfDislike': FieldValue.arrayUnion([
-        FirebaseFirestore.instance.collection('users').doc(user?.uid),
-      ]),
-    });
-    setState(() {
-      isUserDisliked(widget.documentReference!);
-      isDisliked = true;
-    });
-    print('disliked');
-  }
-
-  Future<void> fetchInitialFeedback(
-      {DocumentReference<Object?>? documentReference}) async {
-    if (documentReference != null) {
-      context.read<StoryFeedbackBloc>().add(
-            UpdateInitialFeedbackEvent(
-                rating: 0,
-                issues: [],
-                customIssue: '',
-                dislike: true,
-                liked: false),
-          );
-    }
-  }
-
   Future<void> isUserDisliked(DocumentReference docRef) async {
     final user = FirebaseAuth.instance.currentUser;
-    if (user == null || widget.suggestedStories == false) {
+    if (user == null) {
       setState(() {
-        isDisliked = false;
+        isDislikeddd = false;
       });
       return; // If user is not logged in, return false
     }
@@ -526,7 +392,7 @@ class _NavBar2State extends State<NavBar2> {
 
     if (!docSnapshot.exists) {
       setState(() {
-        isDisliked = false;
+        isDislikeddd = false;
       }); // If document does not exist, return false
     }
 
@@ -553,51 +419,90 @@ class _NavBar2State extends State<NavBar2> {
     // Check if the current user's reference is in the 'noOfDislike' list
   }
 
-  Future<void> updateFirebase({
-    required bool fav,
-    required DocumentReference<Object?> docRef,
-  }) async {
-    if (fav) {
-      await docRef.update({
-        'isfav': true,
+  Future<void> isUserliked(DocumentReference docRef) async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) {
+      setState(() {
+        isliked = false;
       });
-      print('Story added to fav');
-    } else {
-      await docRef.update({'isfav': false});
-      print('Story removed from fav');
+      return; // If user is not logged in, return false
     }
+
+    final userRef =
+        FirebaseFirestore.instance.collection('users').doc(user.uid);
+
+    // Get the document snapshot
+    final docSnapshot = await docRef.get();
+
+    if (!docSnapshot.exists) {
+      setState(() {
+        isliked = false;
+      }); // If document does not exist, return false
+    }
+
+    // Check if the 'noOfDislike' field is present and is a list
+    final likes = docSnapshot['noOfFavorites'] as List?;
+
+    if (likes == null) {
+      setState(() {
+        isliked = false;
+      });
+      // If 'noOflike' field is not available, return false
+    } else {
+      if (likes.contains(userRef)) {
+        setState(() {
+          isliked = true;
+        });
+      } else {
+        setState(() {
+          isliked = false;
+        });
+      }
+    }
+
+    // Check if the current user's reference is in the 'noOfDislike' list
   }
 
   Future<void> updateFirebaseSuggested({
-    required bool fav,
+    required bool liked,
     required DocumentReference<Object?> docRef,
   }) async {
-    if (fav) {
+    if (liked) {
       await docRef.update({
-        'isfav': true,
         'noOfFavorites': FieldValue.arrayUnion([
           FirebaseFirestore.instance.collection('users').doc(user?.uid),
         ]),
+        'noOfDislike': FieldValue.arrayRemove([
+          FirebaseFirestore.instance.collection('users').doc(user?.uid),
+        ]),
+      });
+      setState(() {
+        isDislikeddd = false;
+        isliked = true;
       });
       print('Story added to fav');
     } else {
       await docRef.update({
-        'isfav': false,
+        'noOfDislike': FieldValue.arrayUnion([
+          FirebaseFirestore.instance.collection('users').doc(user?.uid),
+        ]),
         'noOfFavorites': FieldValue.arrayRemove([
           FirebaseFirestore.instance.collection('users').doc(user?.uid),
         ]),
       });
-      print('Story removed from fav');
+      setState(() {
+        isDislikeddd = true;
+        isliked = false;
+      });
     }
   }
 
   Future<void> openWhatsAppChat(String text) async {
-    final encodedText = Uri.encodeComponent(text);
+    var url = "https://wa.me/?text=$text";
+    var uri = Uri.encodeFull(url);
 
-    final url = "https://wa.me/?text=$encodedText";
-
-    if (await canLaunchUrl(Uri.parse(url))) {
-      await launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
+    if (await canLaunchUrl(Uri.parse(uri))) {
+      await launchUrl(Uri.parse(uri), mode: LaunchMode.externalApplication);
     } else {
       throw 'Could not launch WhatsApp';
     }

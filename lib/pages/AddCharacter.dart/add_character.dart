@@ -14,7 +14,7 @@ import 'package:pixieapp/models/story_model.dart';
 import 'package:pixieapp/widgets/add_charactor_story.dart';
 import 'package:pixieapp/widgets/add_lesson_bottom_sheet.dart';
 import 'package:pixieapp/widgets/widgets_index.dart';
-
+import 'package:pixieapp/widgets/analytics.dart';
 class AddCharacter extends StatefulWidget {
   const AddCharacter({super.key});
 
@@ -26,7 +26,7 @@ class _AddCharacterState extends State<AddCharacter> {
   PageController? pageViewController;
   List<Lovedonces> lovedOnceList = [];
   List<String> lessons = [];
-
+  final FocusNode _focusNode = FocusNode();
   int? selectedlovedone;
   StoryModal storydata = StoryModal(
       age: "age",
@@ -43,6 +43,7 @@ class _AddCharacterState extends State<AddCharacter> {
   final scaffoldKey = GlobalKey<ScaffoldState>();
   List<String> suggestedCharactersList = [];
   List<String> suggestedLeassonsList = [];
+  TextEditingController character_name = TextEditingController();
 
   @override
   void initState() {
@@ -63,6 +64,10 @@ class _AddCharacterState extends State<AddCharacter> {
         suggestedLeassonsList = suggestedlist;
       });
     });
+     AnalyticsService.logScreenView(
+      screenName: '/AddCharacter',
+      screenClass: 'Add Character Screen',
+    );
   }
 
   @override
@@ -384,16 +389,19 @@ class _AddCharacterState extends State<AddCharacter> {
                                                       as Map<String, dynamic>;
 
                                                   // Deserialize the loved ones list
-                                                  List<
-                                                      Lovedonces> lovedonce = userData[
+                                                  List<Lovedonces> lovedonce = userData[
                                                               'loved_once'] !=
                                                           null
                                                       ? List<Lovedonces>.from(
                                                           userData['loved_once']
+                                                              .where((item) =>
+                                                                  Lovedonces.fromMap(
+                                                                          item)
+                                                                      .name
+                                                                      .isNotEmpty)
                                                               .map((item) =>
-                                                                  Lovedonces
-                                                                      .fromMap(
-                                                                          item)))
+                                                                  Lovedonces.fromMap(
+                                                                      item)))
                                                       : [];
 
                                                   if (lovedonce.isEmpty) {
@@ -495,9 +503,10 @@ class _AddCharacterState extends State<AddCharacter> {
                                                                     Text(
                                                                       (lovedOne.relation == "Mother" ||
                                                                               lovedOne.relation == "Father" ||
-                                                                              lovedOne.relation == "Grand father" ||
-                                                                              lovedOne.relation == "Grand mother" ||
-                                                                              lovedOne.relation == 'Female friend')
+                                                                              lovedOne.relation == "Grandfather" ||
+                                                                              lovedOne.relation == "Grandmother" ||
+                                                                              lovedOne.relation == 'Maternal Grandfather' ||
+                                                                              lovedOne.relation == "Maternal Grandmother")
                                                                           ? lovedOne.relation
                                                                           : lovedOne.name,
                                                                       style: theme
@@ -940,11 +949,14 @@ class _AddCharacterState extends State<AddCharacter> {
                                                                   .size
                                                                   .width *
                                                               .67,
-                                                      child: const TextField(
+                                                      child: TextField(
+                                                        controller:
+                                                            character_name,
+                                                        focusNode: _focusNode,
                                                         textCapitalization:
                                                             TextCapitalization
                                                                 .sentences,
-                                                        decoration: InputDecoration(
+                                                        decoration: const InputDecoration(
                                                             hintText:
                                                                 'Enter character name',
                                                             hintStyle: TextStyle(
@@ -1012,6 +1024,8 @@ class _AddCharacterState extends State<AddCharacter> {
                                         customSlider(percent: 0),
                                         TextButton(
                                             onPressed: () {
+                                               AnalyticsService.logEvent(
+                                              eventName: 'create_story_button');
                                               context.push('/CreateStoryPage',
                                                   extra: storydata);
                                             },
@@ -1550,6 +1564,7 @@ class _AddCharacterState extends State<AddCharacter> {
                                   Expanded(
                                     child: ElevatedButton(
                                       onPressed: () async {
+                                        _focusNode.unfocus();
                                         User? user =
                                             FirebaseAuth.instance.currentUser;
 
@@ -1586,6 +1601,11 @@ class _AddCharacterState extends State<AddCharacter> {
                                           } else if (state.currentPageIndex ==
                                                   2 &&
                                               state.charactorname != null) {
+                                            print(character_name.text);
+                                            context
+                                                .read<AddCharacterBloc>()
+                                                .add(UpdateCharactername(
+                                                    character_name.text));
                                             pageViewController?.nextPage(
                                               duration: const Duration(
                                                   milliseconds: 300),
@@ -1717,7 +1737,7 @@ class _AddCharacterState extends State<AddCharacter> {
           width: MediaQuery.sizeOf(context).width * 0.9,
           height: 48,
           child: ElevatedButton(
-            iconAlignment: IconAlignment.start,
+          //  iconAlignment: IconAlignment.start,
             onPressed: ontap,
             style: ElevatedButton.styleFrom(
               shape: RoundedRectangleBorder(
@@ -1780,7 +1800,7 @@ class _AddCharacterState extends State<AddCharacter> {
           width: MediaQuery.sizeOf(context).width * 0.9,
           height: 48,
           child: ElevatedButton(
-            iconAlignment: IconAlignment.start,
+        //    iconAlignment: IconAlignment.start,
             onPressed: ontap,
             style: ElevatedButton.styleFrom(
               shape: RoundedRectangleBorder(

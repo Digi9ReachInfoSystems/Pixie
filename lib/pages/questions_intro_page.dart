@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:pixieapp/const/colors.dart';
+import 'package:pixieapp/widgets/analytics.dart';
 
 class QuestionsIntroPage extends StatelessWidget {
   const QuestionsIntroPage({super.key});
@@ -53,7 +54,7 @@ class QuestionsIntroPage extends StatelessWidget {
                       child: Transform.rotate(
                         angle: .06,
                         child: Text(
-                            'Just 3 steps before we can create stories together',
+                            'Just 2 steps before we can create stories together',
                             textAlign: TextAlign.center,
                             style: theme.textTheme.bodyMedium!.copyWith(
                                 fontSize: 20,
@@ -92,6 +93,8 @@ class QuestionsIntroPage extends StatelessWidget {
                     height: 60,
                     child: ElevatedButton(
                       onPressed: () {
+                         AnalyticsService.logEvent(
+                            eventName: 'Question_continue_button');
                         context.push('/introductionPages');
                       },
                       style: ElevatedButton.styleFrom(

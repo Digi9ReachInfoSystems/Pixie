@@ -61,4 +61,6 @@ class TogglePasswordVisibilityEvent extends AuthEvent {}
 // New Event for Guest Login
 class AuthGuestLoginRequested extends AuthEvent {}
 
+class AuthAppleSignInRequested extends AuthEvent {}
+
 class AuthGuestcreateaccountRequested extends AuthEvent {}

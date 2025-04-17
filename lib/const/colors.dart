@@ -20,7 +20,7 @@ class AppColors {
   static const backgroundpurple = Color(0xff995CDD);
   static const backgrountdarkpurple = Color(0xff612ACE);
 
-  static const primaryColor = Color(0xffFFFCB1);
+  static const primaryColor = Color(0xff612ACE);
   static const secondaryColor = Color(0xffCEBEFB);
   static const tertiarycolor = Color(0xff612ACE);
   static const koffwhiteColor = Color(0xffECECEC);

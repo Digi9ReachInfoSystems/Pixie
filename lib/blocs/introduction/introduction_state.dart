@@ -33,3 +33,5 @@ class RelationUpdated extends IntroductionState {
   final String relationName;
   RelationUpdated({required this.relation, required this.relationName});
 }
+
+class loadingState extends IntroductionState {}

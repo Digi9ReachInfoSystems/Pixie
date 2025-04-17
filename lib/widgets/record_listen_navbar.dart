@@ -1,19 +1,22 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:pixieapp/blocs/Story_bloc/story_bloc.dart';
 import 'package:pixieapp/blocs/Story_bloc/story_event.dart';
-import 'package:pixieapp/blocs/bottom_nav_bloc/bottom_nav_bloc.dart';
-import 'package:pixieapp/blocs/bottom_nav_bloc/bottom_nav_event.dart';
 import 'package:pixieapp/const/colors.dart';
-
+import 'package:pixieapp/widgets/analytics.dart';
 class RecordListenNavbar extends StatelessWidget {
   final String story;
   final String title;
   final String language;
+  final String event;
+  final DocumentReference<Object?>? documentReference;
   const RecordListenNavbar(
       {super.key,
       required this.story,
       required this.title,
+      required this.event,
+      required this.documentReference,
       required this.language});
 
   @override
@@ -39,8 +42,9 @@ class RecordListenNavbar extends StatelessWidget {
             width: 150,
             child: ElevatedButton(
               onPressed: () {
+                  AnalyticsService.logEvent(
+                            eventName: 'record_audio_button');
                 context.read<StoryBloc>().add(const StartRecordnavbarEvent());
-                print("aaaaa");
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.kwhiteColor,
@@ -63,8 +67,13 @@ class RecordListenNavbar extends StatelessWidget {
             width: 150,
             child: ElevatedButton(
               onPressed: () {
-                context.read<StoryBloc>().add(
-                    SpeechToTextEvent(text: story + title, language: language));
+                  AnalyticsService.logEvent(
+                            eventName: 'listen_audio_button');
+                context.read<StoryBloc>().add(SpeechToTextEvent(
+                      event: event,
+                      text: "$title.<break time=\"1.0s\" />$story",
+                      language: language,
+                    ));
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.kwhiteColor,

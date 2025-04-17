@@ -151,7 +151,7 @@ class _GenreBottomsheetState extends State<GenreBottomsheet> {
           width: MediaQuery.sizeOf(context).width * 0.9,
           height: 48,
           child: ElevatedButton(
-            iconAlignment: IconAlignment.start,
+         //   iconAlignment: IconAlignment.start,
             onPressed: ontap,
             style: ElevatedButton.styleFrom(
               shape: RoundedRectangleBorder(

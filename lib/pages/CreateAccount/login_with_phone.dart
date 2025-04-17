@@ -12,12 +12,11 @@ import 'package:pixieapp/widgets/analytics.dart';
 import 'package:pixieapp/widgets/loading_widget.dart';
 import 'package:flutter/services.dart';
 
-class CreateAccount extends StatefulWidget {
-  final String title;
-  const CreateAccount({super.key, required this.title});
+class Loginwithphone extends StatefulWidget {
+  const Loginwithphone({super.key});
 
   @override
-  State<CreateAccount> createState() => _CreateAccountState();
+  State<Loginwithphone> createState() => _LoginwithphoneState();
 }
 
 TextEditingController countrycodetextEditingController =
@@ -27,14 +26,14 @@ String countryCode = '';
 final _formKey = GlobalKey<FormState>();
 final FocusNode _focusNode = FocusNode();
 
-class _CreateAccountState extends State<CreateAccount> {
+class _LoginwithphoneState extends State<Loginwithphone> {
   @override
   void initState() {
     _focusNode.unfocus();
     super.initState();
     AnalyticsService.logScreenView(
-      screenName: '/CreateAccount',
-      screenClass: 'Create Account Screen',
+      screenName: '/loginwithphone',
+      screenClass: 'phone login screen',
     );
   }
 
@@ -111,7 +110,7 @@ class _CreateAccountState extends State<CreateAccount> {
                             width: width * .2,
                           ),
                           Text(
-                            widget.title,
+                            "Sign in to your account",
                             textAlign: TextAlign.center,
                             style: theme.textTheme.displayLarge!.copyWith(
                                 fontSize: 34, fontWeight: FontWeight.w700),
@@ -352,8 +351,7 @@ class _CreateAccountState extends State<CreateAccount> {
                             elevation: 5,
                             borderRadius: BorderRadius.circular(12),
                             child: InkWell(
-                              onTap: () =>
-                                  context.push('/CreateAccountWithEmail'),
+                              onTap: () => context.go('/Loginpage'),
                               child: Container(
                                 decoration: BoxDecoration(
                                     color: Colors.white,
@@ -372,7 +370,7 @@ class _CreateAccountState extends State<CreateAccount> {
                                               "assets/images/mail.png")),
                                     ),
                                     Text(
-                                      "Sign Up with Email Address",
+                                      "Sign In with Email Address",
                                       style: theme.textTheme.bodyMedium!
                                           .copyWith(
                                               fontSize: 17,
@@ -412,7 +410,7 @@ class _CreateAccountState extends State<CreateAccount> {
                                               "assets/images/googleimg.png")),
                                     ),
                                     Text(
-                                      "Sign Up with Google",
+                                      "Sign In with Google",
                                       style: theme.textTheme.bodyMedium!
                                           .copyWith(
                                               fontSize: 17,
@@ -452,7 +450,7 @@ class _CreateAccountState extends State<CreateAccount> {
                                               "assets/images/apple_logo.png")),
                                     ),
                                     Text(
-                                      "Sign Up with Apple",
+                                      "Sign In with Apple",
                                       style: theme.textTheme.bodyMedium!
                                           .copyWith(
                                               fontSize: 17,
@@ -469,7 +467,7 @@ class _CreateAccountState extends State<CreateAccount> {
                           const SizedBox(height: 30),
                           RichText(
                               text: TextSpan(
-                                  text: 'Already have an account? ',
+                                  text: 'New user?   ',
                                   style: theme.textTheme.bodyMedium!.copyWith(
                                       fontSize: 17,
                                       fontWeight: FontWeight.w400,
@@ -478,11 +476,10 @@ class _CreateAccountState extends State<CreateAccount> {
                                 TextSpan(
                                   recognizer: TapGestureRecognizer()
                                     ..onTap = () {
-                                      context.go(
-                                        '/loginwithphone',
-                                      );
+                                      context.go('/CreateAccount',
+                                          extra: 'Create an account');
                                     },
-                                  text: 'Sign In',
+                                  text: 'Sign Up',
                                   style: theme.textTheme.bodyMedium!.copyWith(
                                       fontSize: 17,
                                       fontWeight: FontWeight.w400,

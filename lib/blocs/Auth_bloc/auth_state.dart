@@ -45,6 +45,16 @@ class PasswordVisibilityState extends AuthState {
   PasswordVisibilityState(this.isPasswordVisible);
 }
 
+class AuthAppleSignInSuccess extends AuthState {
+  final String userId;
+  AuthAppleSignInSuccess({required this.userId});
+}
+
+class AuthAppleSignInError extends AuthState {
+  final String message;
+  AuthAppleSignInError({required this.message});
+}
+
 // New State for Guest Login
 class AuthGuest extends AuthState {}
 

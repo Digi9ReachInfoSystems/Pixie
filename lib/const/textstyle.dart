@@ -23,6 +23,16 @@ TextStyle getTextStyle({
 ThemeData appTheme(BuildContext context) {
   final ScalerModule scaler = ScalerModule(context);
   return ThemeData(
+    snackBarTheme: const SnackBarThemeData(
+      backgroundColor: Color.fromARGB(
+          255, 231, 201, 249), // Set your desired background color
+      contentTextStyle: TextStyle(
+        color: AppColors
+            .primaryColor, // Set the text color for the SnackBar content
+        fontSize: 16,
+      ),
+      actionTextColor: Colors.yellow, // Set action text color
+    ),
     useMaterial3: true,
     primaryColor: AppColors.primaryColor,
     scaffoldBackgroundColor: AppColors.secondaryBackgroundColor,

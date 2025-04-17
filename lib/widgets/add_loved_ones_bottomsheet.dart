@@ -21,16 +21,24 @@ class _AddLovedOnesBottomSheetState extends State<AddLovedOnesBottomSheet> {
   String? selectedRelation;
   bool isExpanded = false;
   bool isSubmitting = false;
-
+  final FocusNode _focusNode = FocusNode();
   final List<String> relations = [
-    'Friend',
-    'Brother',
-    'Sister',
-    'Uncle',
-    'Aunt',
+    'Maternal Grandfather',
+    'Maternal Grandmother',
+    'Elder Sister',
+    'Younger Brother',
+    'Elder Brother',
+    'Female Friend',
+    'Male Friend',
     'Pet Cat',
+    'Pet Dog'
   ];
   TextEditingController nameofRelation = TextEditingController();
+  @override
+  void initState() {
+    _focusNode.unfocus();
+    super.initState();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -90,6 +98,7 @@ class _AddLovedOnesBottomSheetState extends State<AddLovedOnesBottomSheet> {
                       const SizedBox(height: 10),
                       GestureDetector(
                         onTap: () {
+                          _focusNode.unfocus();
                           setState(() {
                             isExpanded = !isExpanded;
                           });
@@ -127,8 +136,8 @@ class _AddLovedOnesBottomSheetState extends State<AddLovedOnesBottomSheet> {
                         elevation: 2,
                         borderRadius: BorderRadius.circular(10),
                         child: TextField(
+                          focusNode: _focusNode,
                           textCapitalization: TextCapitalization.sentences,
-                          autofocus: false,
                           controller: nameofRelation,
                           style: theme.textTheme.bodyMedium?.copyWith(
                             fontWeight: FontWeight.w400,
@@ -186,6 +195,7 @@ class _AddLovedOnesBottomSheetState extends State<AddLovedOnesBottomSheet> {
                                         isSubmitting = false;
                                       });
                                       Navigator.pop(context);
+                                      FocusScope.of(context).unfocus();
                                     }
                                   }
                                 },

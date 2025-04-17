@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:pixieapp/const/colors.dart';
-
+import 'package:pixieapp/widgets/analytics.dart';
 class StoryConfirmationPage extends StatefulWidget {
   const StoryConfirmationPage({super.key});
 
@@ -10,6 +10,14 @@ class StoryConfirmationPage extends StatefulWidget {
 }
 
 class _StoryConfirmationPageState extends State<StoryConfirmationPage> {
+   @override
+  void initState() {
+    super.initState();
+    AnalyticsService.logScreenView(
+      screenName: '/storyconfirmationstory',
+      screenClass: 'Story Confirmation Screen',
+    );
+  }
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -121,6 +129,8 @@ class _StoryConfirmationPageState extends State<StoryConfirmationPage> {
               children: [
                 ElevatedButton(
                   onPressed: () {
+                     AnalyticsService.logEvent(
+                            eventName: 'Yes_button');
                     context.push('/AddCharacter');
                   },
                   style: ElevatedButton.styleFrom(
@@ -142,6 +152,8 @@ class _StoryConfirmationPageState extends State<StoryConfirmationPage> {
                 const SizedBox(width: 20),
                 ElevatedButton(
                   onPressed: () {
+                     AnalyticsService.logEvent(
+                            eventName: 'No_button');
                     context.push('/HomePage');
                   },
                   style: ElevatedButton.styleFrom(

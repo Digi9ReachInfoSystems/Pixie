@@ -18,6 +18,7 @@ class FetchStoryRepository1 {
       List<Map<String, dynamic>> stories = querySnapshot.docs.map((doc) {
         return {
           'title': doc['title'],
+          'story': doc['story'],
           'storytype': doc['storytype'],
           'audiofile': doc['audiofile'],
           'genre': doc['genre'],

@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
@@ -13,33 +14,45 @@ import 'package:pixieapp/blocs/add_character_Bloc.dart/add_character_bloc.dart';
 import 'package:pixieapp/const/colors.dart';
 
 class BottomNavRecord extends StatefulWidget {
-  final String event;
   // final DocumentReference<Object?>? documentReference;
-  const BottomNavRecord({super.key, required this.event});
+  const BottomNavRecord({super.key});
 
   @override
   State<BottomNavRecord> createState() => _BottomNavRecordState();
 }
 
 class _BottomNavRecordState extends State<BottomNavRecord> {
+  Timer _timer = Timer.periodic(
+    Duration(seconds: 1),
+    (timer) {},
+  );
+  int _elapsedTimeInSeconds = 0; // Time in seconds
+  bool _isRecording = false;
+
   @override
   void initState() {
     requestpermission();
     super.initState();
   }
 
+  @override
+  void dispose() {
+    _timer.cancel();
+    super.dispose();
+  }
+
   void requestpermission() async {
     try {
       var status = await Permission.microphone.status;
-      print('Microphone permission status: $status');
-      print("*****");
+      // print('Microphone permission status: $status');
+      // print("***********");
       // If permission is denied or restricted, request it
       if (status.isDenied || status.isRestricted) {
-        print('Microphone permission status before request: $status');
+        // print('Microphone permission status before request: $status');
         status = await Permission.microphone.request();
 
         // Log the status after the request
-        print('Microphone permission status after request: $status');
+        // print('Microphone permission status after request: $status');
 
         // If permission is still not granted, return an error
         if (!status.isGranted) {
@@ -47,12 +60,41 @@ class _BottomNavRecordState extends State<BottomNavRecord> {
         }
       }
     } catch (error) {
-      print(error);
+      // print(error);
     }
+  }
+
+  // Start or stop recording
+  void _toggleRecording() {
+    if (_isRecording) {
+      _timer.cancel(); // Stop the timer
+    } else {
+      _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
+        setState(() {
+          _elapsedTimeInSeconds++;
+        });
+      });
+      // _isRecording = true;
+    }
+
+    setState(() {
+      _isRecording = !_isRecording;
+    });
+  }
+
+  // Reset the timer
+  void _resetTimer() {
+    _timer.cancel();
+    setState(() {
+      _elapsedTimeInSeconds = 0;
+      _isRecording = false;
+    });
   }
 
   @override
   Widget build(BuildContext context) {
+    int minutes = _elapsedTimeInSeconds ~/ 60;
+    int seconds = _elapsedTimeInSeconds % 60;
     return BlocListener<StoryBloc, StoryState>(
       listener: (context, state) async {
         if (state is AudioUploaded) {
@@ -92,6 +134,19 @@ class _BottomNavRecordState extends State<BottomNavRecord> {
                         child: TextButton(
                           onPressed: () {
                             if (state is AudioStopped) {}
+                            // _resetTimer;
+                            _timer.cancel();
+                            setState(() {
+                              _elapsedTimeInSeconds = 0;
+                              _isRecording = false;
+                            });
+
+                            _timer = Timer.periodic(const Duration(seconds: 1),
+                                (timer) {
+                              setState(() {
+                                _elapsedTimeInSeconds++;
+                              });
+                            });
                             context
                                 .read<StoryBloc>()
                                 .add(StartRecordingEvent());
@@ -106,21 +161,89 @@ class _BottomNavRecordState extends State<BottomNavRecord> {
                           ),
                           child: const Text(
                             "Record Again",
-                            style: TextStyle(fontSize: 15),
+                            style: TextStyle(fontSize: 14),
                           ),
                         ),
                       ),
                       Expanded(
                         flex: 1,
                         child: state is AudioRecording
-                            ? Row(
+                            ? Column(
+                                children: [
+                                  Text(
+                                    ' ${formatElapsedTime(_elapsedTimeInSeconds)}',
+                                    style: const TextStyle(
+                                        fontSize: 16,
+                                        color: AppColors.buttonblue,
+                                        fontWeight: FontWeight.bold),
+                                  ),
+                                  const SizedBox(height: 15),
+                                  Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      InkWell(
+                                        onTap: () async {
+                                          // _toggleRecording();
+                                          _timer.cancel();
+                                          context
+                                              .read<StoryBloc>()
+                                              .add(StopRecordingEvent());
+                                        },
+                                        child: Container(
+                                          decoration: BoxDecoration(
+                                              color: Colors.white,
+                                              shape: BoxShape.circle,
+                                              border: Border.all(
+                                                  color:
+                                                      const Color(0xff6F6F6F),
+                                                  width: 2)),
+                                          child: Padding(
+                                            padding: const EdgeInsets.all(20.0),
+                                            child: Container(
+                                              height: 40,
+                                              width: 40,
+                                              decoration: const BoxDecoration(
+                                                borderRadius: BorderRadius.all(
+                                                    Radius.circular(7)),
+                                                color: AppColors.buttonblue,
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              )
+                            : Column(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
+                                  Text(
+                                    ' ${formatElapsedTime(_elapsedTimeInSeconds)}',
+                                    style: const TextStyle(
+                                        fontSize: 16,
+                                        color: AppColors.buttonblue,
+                                        fontWeight: FontWeight.bold),
+                                  ),
+                                  const SizedBox(height: 15),
                                   InkWell(
-                                    onTap: () {
+                                    onTap: () async {
+                                      // _toggleRecording;
+                                      _timer.cancel();
+                                      setState(() {
+                                        _elapsedTimeInSeconds = 0;
+                                        _isRecording = false;
+                                      });
+                                      _timer = Timer.periodic(
+                                          const Duration(seconds: 1), (timer) {
+                                        setState(() {
+                                          _elapsedTimeInSeconds++;
+                                        });
+                                      });
+
                                       context
                                           .read<StoryBloc>()
-                                          .add(StopRecordingEvent());
+                                          .add(StartRecordingEvent());
                                     },
                                     child: Container(
                                       decoration: BoxDecoration(
@@ -130,13 +253,12 @@ class _BottomNavRecordState extends State<BottomNavRecord> {
                                               color: const Color(0xff6F6F6F),
                                               width: 2)),
                                       child: Padding(
-                                        padding: const EdgeInsets.all(20.0),
+                                        padding: const EdgeInsets.all(5.0),
                                         child: Container(
-                                          height: 40,
-                                          width: 40,
+                                          height: 80,
+                                          width: 80,
                                           decoration: const BoxDecoration(
-                                            borderRadius: BorderRadius.all(
-                                                Radius.circular(7)),
+                                            shape: BoxShape.circle,
                                             color: AppColors.buttonblue,
                                           ),
                                         ),
@@ -144,32 +266,6 @@ class _BottomNavRecordState extends State<BottomNavRecord> {
                                     ),
                                   ),
                                 ],
-                              )
-                            : InkWell(
-                                onTap: () {
-                                  context
-                                      .read<StoryBloc>()
-                                      .add(StartRecordingEvent());
-                                },
-                                child: Container(
-                                  decoration: BoxDecoration(
-                                      color: Colors.white,
-                                      shape: BoxShape.circle,
-                                      border: Border.all(
-                                          color: const Color(0xff6F6F6F),
-                                          width: 2)),
-                                  child: Padding(
-                                    padding: const EdgeInsets.all(5.0),
-                                    child: Container(
-                                      height: 80,
-                                      width: 80,
-                                      decoration: const BoxDecoration(
-                                        shape: BoxShape.circle,
-                                        color: AppColors.buttonblue,
-                                      ),
-                                    ),
-                                  ),
-                                ),
                               ),
                       ),
                       Expanded(
@@ -180,9 +276,10 @@ class _BottomNavRecordState extends State<BottomNavRecord> {
                               final addcharacterState =
                                   context.read<AddCharacterBloc>().state;
 
-                              print(addcharacterState.musicAndSpeed);
+                              // print(addcharacterState.musicAndSpeed);
                               context.read<StoryBloc>().add(AddMusicEvent(
-                                  event: widget.event,
+                                  event: addcharacterState.musicAndSpeed ??
+                                      "bedtime",
                                   audiofile: File(state.audioPath)));
                             }
                           },
@@ -196,7 +293,7 @@ class _BottomNavRecordState extends State<BottomNavRecord> {
                           ),
                           child: const Text(
                             "Save Recording",
-                            style: TextStyle(fontSize: 15),
+                            style: TextStyle(fontSize: 14),
                           ),
                         ),
                       ),
@@ -210,4 +307,16 @@ class _BottomNavRecordState extends State<BottomNavRecord> {
       ),
     );
   }
+}
+
+String formatElapsedTime(int secondss) {
+  // Create a Duration object from seconds
+  Duration duration = Duration(seconds: secondss);
+
+  // Format it as HH:mm:ss
+  String hours = duration.inHours.toString().padLeft(2, '0');
+  String minutes = (duration.inMinutes % 60).toString().padLeft(2, '0');
+  String seconds = (duration.inSeconds % 60).toString().padLeft(2, '0');
+
+  return '$hours:$minutes:$seconds';
 }

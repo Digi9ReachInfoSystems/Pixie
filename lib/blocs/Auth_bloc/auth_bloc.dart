@@ -1,9 +1,12 @@
 import 'package:bloc/bloc.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:pixieapp/repositories/authModel.dart';
+import 'package:pixieapp/widgets/analytics.dart';
+import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 import 'auth_event.dart';
 import 'auth_state.dart';
 
@@ -21,24 +24,35 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     on<AuthCheckStatus>(_onCheckStatus);
     on<AuthCheckAuthState>(_onCheckAuthState);
     on<TogglePasswordVisibilityEvent>(_onAuthShowPassword);
+    on<AuthAppleSignInRequested>(_onAppleSignInRequested);
     on<SendOtpToPhoneEvent>((event, emit) async {
       emit(AuthLoading());
 
       try {
         await FirebaseAuth.instance.verifyPhoneNumber(
-            phoneNumber: event.phoneNumber,
-            verificationCompleted: (PhoneAuthCredential credential) {
+          phoneNumber: event.phoneNumber,
+          verificationCompleted: (PhoneAuthCredential credential) {
+            if (!isClosed) {
               add(OnPhoneAuthVerificationCompletedEvent(
                   credential: credential));
-            },
-            verificationFailed: (FirebaseAuthException e) {
+            }
+          },
+          verificationFailed: (FirebaseAuthException e) {
+            if (!isClosed) {
               add(OnPhoneAuthErrorEvent(error: e.toString()));
-            },
-            codeSent: (String verificationId, int? refreshToken) {
+            }
+          },
+          codeSent: (String verificationId, int? resendToken) {
+            if (!isClosed) {
               add(OnPhoneOtpSend(
-                  verificationId: verificationId, token: refreshToken!));
-            },
-            codeAutoRetrievalTimeout: (String verificatioId) {});
+                  verificationId: verificationId, token: resendToken ?? 0));
+            }
+          },
+          codeAutoRetrievalTimeout: (String verificationId) {
+            debugPrint("Code auto-retrieval timed out for $verificationId");
+          },
+          timeout: Duration.zero,
+        );
       } catch (e) {
         emit(LoginScreenErrorState(error: e.toString()));
       }
@@ -48,17 +62,20 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       emit(PhoneAuthCodeSentSuccess(verificationId: event.verificationId));
     });
 
-    on<VerifySentOtp>(
-      (event, emit) {
-        try {
-          PhoneAuthCredential credential = PhoneAuthProvider.credential(
-              verificationId: event.verificationId, smsCode: event.otpCode);
+    on<VerifySentOtp>((event, emit) {
+      try {
+        emit(AuthLoading());
+        PhoneAuthCredential credential = PhoneAuthProvider.credential(
+          verificationId: event.verificationId,
+          smsCode: event.otpCode,
+        );
+        if (!isClosed) {
           add(OnPhoneAuthVerificationCompletedEvent(credential: credential));
-        } catch (e) {
-          emit(LoginScreenErrorState(error: e.toString()));
         }
-      },
-    );
+      } catch (e) {
+        emit(LoginScreenErrorState(error: e.toString()));
+      }
+    });
 
     on<OnPhoneAuthErrorEvent>((event, emit) {
       emit(LoginScreenErrorState(error: event.error.toString()));
@@ -78,6 +95,8 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
             .collection('users')
             .doc(userId)
             .get();
+        AnalyticsService.logFirebaseAuthEvent(
+            userCredential.user, 'phone_auth');
         if (!userDoc.exists) {
           await FirebaseFirestore.instance.collection('users').doc(userId).set({
             'phone': phone,
@@ -91,7 +110,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
             'loved_once': [],
             'moreLovedOnes': [],
             'photoURL': photoURL,
-            'newUser': true
+            'newUser': true,
           });
         }
         emit(AuthAuthenticated(userId: userId));
@@ -160,6 +179,8 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
           .collection('users')
           .doc(userId)
           .get();
+      AnalyticsService.logFirebaseAuthEvent(
+          userCredential.user, 'email_sign_up');
       if (!userDoc.exists) {
         await FirebaseFirestore.instance.collection('users').doc(userId).set({
           'email': event.email,
@@ -180,6 +201,70 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       emit(AuthAuthenticated(userId: userId));
     } catch (e) {
       emit(AuthError(message: e.toString()));
+    }
+  }
+
+  Future<void> _onAppleSignInRequested(
+      AuthAppleSignInRequested event, Emitter<AuthState> emit) async {
+    emit(AuthLoading());
+
+    try {
+      // Step 1: Perform Apple Sign-In
+      final appleCredential = await SignInWithApple.getAppleIDCredential(
+        scopes: [
+          AppleIDAuthorizationScopes.email,
+          AppleIDAuthorizationScopes.fullName,
+        ],
+      );
+
+      // Step 2: Create OAuth credential for Firebase
+      final oAuthCredential = OAuthProvider('apple.com').credential(
+        idToken: appleCredential.identityToken,
+        accessToken: appleCredential.authorizationCode,
+      );
+
+      // Step 3: Sign in to Firebase
+      final userCredential =
+          await _firebaseAuth.signInWithCredential(oAuthCredential);
+
+      String userId = userCredential.user!.uid;
+      String? email = userCredential.user!.email;
+      String? displayName = appleCredential.givenName != null &&
+              appleCredential.familyName != null
+          ? '${appleCredential.givenName} ${appleCredential.familyName}'
+          : userCredential.user!.displayName;
+      String? photoURL = userCredential.user!.photoURL;
+
+      // Step 4: Check and save user data in Firestore
+      DocumentSnapshot userDoc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(userId)
+          .get();
+      AnalyticsService.logFirebaseAuthEvent(
+          userCredential.user, 'apple_sign_up');
+      if (!userDoc.exists) {
+        await FirebaseFirestore.instance.collection('users').doc(userId).set({
+          'email': email,
+          'displayName': displayName ?? "Apple User",
+          'photoURL': photoURL,
+          'createdAt': DateTime.now(),
+          'userId': userId,
+          'child_name': '',
+          'gender': '',
+          'fav_things': [],
+          'dob': DateTime.now(),
+          'loved_once': [],
+          'moreLovedOnes': [],
+          'newUser': true
+        });
+      }
+
+      emit(AuthAuthenticated(userId: userId));
+    } catch (e) {
+      emit(AuthAppleSignInError(
+          message: 'Apple Sign-In Failed: ${e.toString()}'));
+      debugPrint('Apple Sign-In Failed: $e');
+      emit(AuthAppleSignInError(message: 'Apple Sign-In Failed: $e'));
     }
   }
 
@@ -222,7 +307,8 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
           .collection('users')
           .doc(userId)
           .get();
-
+      AnalyticsService.logFirebaseAuthEvent(
+          userCredential.user, 'google_sign_up');
       if (!userDoc.exists) {
         await FirebaseFirestore.instance.collection('users').doc(userId).set({
           'email': email,

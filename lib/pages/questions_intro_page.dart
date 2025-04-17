@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:pixieapp/const/colors.dart';
+import 'package:pixieapp/widgets/analytics.dart';
 
 class QuestionsIntroPage extends StatelessWidget {
   const QuestionsIntroPage({super.key});
@@ -92,6 +93,8 @@ class QuestionsIntroPage extends StatelessWidget {
                     height: 60,
                     child: ElevatedButton(
                       onPressed: () {
+                         AnalyticsService.logEvent(
+                            eventName: 'Question_continue_button');
                         context.push('/introductionPages');
                       },
                       style: ElevatedButton.styleFrom(

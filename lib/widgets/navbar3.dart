@@ -13,11 +13,13 @@ class NavBar3 extends StatefulWidget {
   final bool favstatus;
   final String text;
   final String language;
+  final String event;
   const NavBar3(
       {super.key,
       required this.documentReference,
       required this.favstatus,
       required this.text,
+      required this.event,
       required this.language});
 
   @override
@@ -72,7 +74,9 @@ class _NavBar3State extends State<NavBar3> {
                 IconButton(
                   onPressed: () {
                     context.read<StoryBloc>().add(SpeechToTextEvent(
-                        text: widget.text, language: widget.language));
+                        event: widget.event,
+                        text: widget.text,
+                        language: widget.language));
                   },
                   icon: SvgPicture.asset(
                     'assets/images/pausebutton.svg',

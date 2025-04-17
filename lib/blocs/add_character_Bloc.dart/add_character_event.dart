@@ -98,12 +98,30 @@ class UpdateMusicandspeedEvent extends AddCharacterEvent {
   List<Object?> get props => [musicandspeed];
 }
 
+class UpdateCharactername extends AddCharacterEvent {
+  final String characterName;
+  const UpdateCharactername(this.characterName);
+
+  @override
+  List<Object?> get props => [characterName];
+}
+
 class UpdatefavbuttonEvent extends AddCharacterEvent {
   final bool fav;
-  const UpdatefavbuttonEvent(this.fav);
+  const UpdatefavbuttonEvent(
+    this.fav,
+  );
 
   @override
   List<Object?> get props => [fav];
+}
+
+class UpdatedislikebuttonEvent extends AddCharacterEvent {
+  final bool dislike;
+  const UpdatedislikebuttonEvent(this.dislike);
+
+  @override
+  List<Object?> get props => [dislike];
 }
 
 class ResetStateEvent extends AddCharacterEvent {}

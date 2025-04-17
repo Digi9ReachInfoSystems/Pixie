@@ -8,6 +8,7 @@ import 'package:go_router/go_router.dart';
 import 'package:pixieapp/widgets/add_charactor_story.dart';
 import 'package:pixieapp/widgets/add_favorites_bottomsheet.dart';
 import 'package:pixieapp/widgets/add_loved_ones_bottomsheet.dart';
+import 'package:pixieapp/widgets/analytics.dart';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
@@ -37,6 +38,10 @@ class _ProfilePageState extends State<ProfilePage>
     _tabController = TabController(length: 2, vsync: this);
     _fetchUserData();
     _nameController = TextEditingController(text: childName);
+    AnalyticsService.logScreenView(
+      screenName: '/profilePage',
+      screenClass: 'Profile Screen',
+    );
   }
 
   Future<void> _fetchUserData() async {
@@ -71,13 +76,13 @@ class _ProfilePageState extends State<ProfilePage>
                 case 'Father':
                   fatherName = name;
                   break;
-                case 'Grand mother':
+                case 'Grandmother':
                   grandMotherName = name;
                   break;
-                case 'Grand father':
+                case 'Grandfather':
                   grandFatherName = name;
                   break;
-                case 'Female friend':
+                case 'Younger Sister':
                   petDogName = name;
                   break;
                 default:
@@ -111,7 +116,7 @@ class _ProfilePageState extends State<ProfilePage>
             decoration: InputDecoration(
               focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(8),
-                  borderSide: BorderSide(color: AppColors.kpurple)),
+                  borderSide: const BorderSide(color: AppColors.kpurple)),
               hintText: "Update your name",
               hintStyle: theme.textTheme.bodyMedium,
             ),
@@ -400,7 +405,17 @@ class _ProfilePageState extends State<ProfilePage>
         'reason': reason,
         'deleted_at': Timestamp.now(),
       });
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+            content: Text(
+                "Your account deletion request has been sent successfully.")),
+      );
     } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+            content: Text(
+                "Failed to send account deletion request. Please try again later or contact support if the issue persists.")),
+      );
       print("Error deleting account: $e");
     }
   }
@@ -426,7 +441,7 @@ class _ProfilePageState extends State<ProfilePage>
             decoration: InputDecoration(
               focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(8),
-                  borderSide: BorderSide(color: AppColors.kpurple)),
+                  borderSide: const BorderSide(color: AppColors.kpurple)),
               hintText: "Update name",
               hintStyle: theme.textTheme.bodyMedium,
             ),
@@ -478,13 +493,13 @@ class _ProfilePageState extends State<ProfilePage>
                     case 'Father':
                       fatherName = _familyController.text;
                       break;
-                    case 'Grand mother':
+                    case 'Grandmother':
                       grandMotherName = _familyController.text;
                       break;
-                    case 'Grand father':
+                    case 'Grandfather':
                       grandFatherName = _familyController.text;
                       break;
-                    case 'Female friend':
+                    case 'Younger Sister':
                       petDogName = _familyController.text;
                       break;
                   }
@@ -519,7 +534,7 @@ class _ProfilePageState extends State<ProfilePage>
             decoration: InputDecoration(
               focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(8),
-                  borderSide: BorderSide(color: AppColors.kpurple)),
+                  borderSide: const BorderSide(color: AppColors.kpurple)),
               hintText: "Update name",
               hintStyle: theme.textTheme.bodyMedium,
             ),
@@ -578,13 +593,13 @@ class _ProfilePageState extends State<ProfilePage>
                     case 'Father':
                       fatherName = _familyController.text;
                       break;
-                    case 'Grand mother':
+                    case 'Grandmother':
                       grandMotherName = _familyController.text;
                       break;
-                    case 'Grand father':
+                    case 'Grandfather':
                       grandFatherName = _familyController.text;
                       break;
-                    case 'Female friend':
+                    case 'Younger Sister':
                       petDogName = _familyController.text;
                       break;
                   }
@@ -918,48 +933,54 @@ class _ProfilePageState extends State<ProfilePage>
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text(
-          title,
-          style:
-              theme.textTheme.bodyMedium!.copyWith(fontWeight: FontWeight.w400),
-        ),
-        Container(
-          padding: const EdgeInsets.only(left: 10),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(8),
-            color: AppColors.kwhiteColor,
+        Expanded(
+          flex: 2,
+          child: Text(
+            title,
+            style: theme.textTheme.bodyMedium!
+                .copyWith(fontWeight: FontWeight.w400),
           ),
-          width: MediaQuery.of(context).size.width * 0.5555,
-          height: 48,
-          child: Center(
-            child: Row(
-              children: [
-                Expanded(
-                  child: TextField(
-                    textCapitalization: TextCapitalization.sentences,
-                    controller: TextEditingController(text: detailAnswer),
-                    enabled: false,
-                    style: theme.textTheme.bodyMedium?.copyWith(
-                      fontWeight: FontWeight.w400,
-                    ),
-                    decoration: const InputDecoration(
-                      contentPadding: EdgeInsets.only(left: 15),
-                      border: InputBorder.none,
-                      focusedBorder: InputBorder.none,
-                      errorBorder: InputBorder.none,
-                      focusedErrorBorder: InputBorder.none,
-                      disabledBorder: InputBorder.none,
-                      enabledBorder: InputBorder.none,
-                      fillColor: AppColors.kwhiteColor,
-                      focusColor: AppColors.textColorblue,
+        ),
+        Expanded(
+          flex: 3,
+          child: Container(
+            padding: const EdgeInsets.only(left: 10),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(8),
+              color: AppColors.kwhiteColor,
+            ),
+            width: MediaQuery.of(context).size.width * 0.5555,
+            height: 48,
+            child: Center(
+              child: Row(
+                children: [
+                  Expanded(
+                    child: TextField(
+                      textCapitalization: TextCapitalization.sentences,
+                      controller: TextEditingController(text: detailAnswer),
+                      enabled: false,
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        fontWeight: FontWeight.w400,
+                      ),
+                      decoration: const InputDecoration(
+                        contentPadding: EdgeInsets.only(left: 15),
+                        border: InputBorder.none,
+                        focusedBorder: InputBorder.none,
+                        errorBorder: InputBorder.none,
+                        focusedErrorBorder: InputBorder.none,
+                        disabledBorder: InputBorder.none,
+                        enabledBorder: InputBorder.none,
+                        fillColor: AppColors.kwhiteColor,
+                        focusColor: AppColors.textColorblue,
+                      ),
                     ),
                   ),
-                ),
-                IconButton(
-                  icon: const Icon(Icons.edit),
-                  onPressed: onpressed,
-                ),
-              ],
+                  IconButton(
+                    icon: const Icon(Icons.edit),
+                    onPressed: onpressed,
+                  ),
+                ],
+              ),
             ),
           ),
         ),
@@ -984,14 +1005,14 @@ class _ProfilePageState extends State<ProfilePage>
                   detailsChild('Father', fatherName ?? ' ',
                       () => _editFamilyName('Father')),
                   const SizedBox(height: 20),
-                  detailsChild('Grand mother', grandMotherName ?? ' ',
-                      () => _editFamilyName('Grand mother')),
+                  detailsChild('Grandmother', grandMotherName ?? ' ',
+                      () => _editFamilyName('Grandmother')),
                   const SizedBox(height: 20),
-                  detailsChild('Grand father', grandFatherName ?? '',
-                      () => _editFamilyName('Grand father')),
+                  detailsChild('Grandfather', grandFatherName ?? '',
+                      () => _editFamilyName('Grandfather')),
                   const SizedBox(height: 20),
-                  detailsChild('Female friend', petDogName ?? '',
-                      () => _editFamilyName('Female friend')),
+                  detailsChild('Younger Sister', petDogName ?? '',
+                      () => _editFamilyName('Younger Sister')),
                   const SizedBox(height: 20),
                   StreamBuilder<DocumentSnapshot>(
                     stream: FirebaseFirestore.instance
@@ -1026,42 +1047,50 @@ class _ProfilePageState extends State<ProfilePage>
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               crossAxisAlignment: CrossAxisAlignment.center,
                               children: [
-                                Text(
-                                  relationName,
-                                  style: theme.textTheme.bodyMedium!.copyWith(
-                                    color: AppColors.textColorblack,
-                                    fontWeight: FontWeight.w400,
+                                Expanded(
+                                  flex: 2,
+                                  child: Text(
+                                    relationName,
+                                    maxLines: 2,
+                                    style: theme.textTheme.bodyMedium!.copyWith(
+                                      color: AppColors.textColorblack,
+                                      fontWeight: FontWeight.w400,
+                                    ),
                                   ),
                                 ),
-                                Container(
-                                  padding: EdgeInsets.only(left: 10, right: 10),
-                                  decoration: BoxDecoration(
-                                    borderRadius: BorderRadius.circular(8),
-                                    color: AppColors.kwhiteColor,
-                                  ),
-                                  width: deviceWidth * 0.5555,
-                                  height: 48,
-                                  child: Row(
-                                    mainAxisAlignment:
-                                        MainAxisAlignment.spaceBetween,
-                                    children: [
-                                      Align(
-                                        alignment: Alignment.centerLeft,
-                                        child: Text(
-                                          name,
-                                          style: theme.textTheme.bodyMedium!
-                                              .copyWith(
-                                            color: AppColors.textColorblack,
-                                            fontWeight: FontWeight.w400,
+                                Expanded(
+                                  flex: 3,
+                                  child: Container(
+                                    padding: const EdgeInsets.only(
+                                        left: 20, right: 10),
+                                    decoration: BoxDecoration(
+                                      borderRadius: BorderRadius.circular(8),
+                                      color: AppColors.kwhiteColor,
+                                    ),
+                                    width: deviceWidth * 0.5555,
+                                    height: 48,
+                                    child: Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.spaceBetween,
+                                      children: [
+                                        Align(
+                                          alignment: Alignment.centerLeft,
+                                          child: Text(
+                                            name,
+                                            style: theme.textTheme.bodyMedium!
+                                                .copyWith(
+                                              color: AppColors.textColorblack,
+                                              fontWeight: FontWeight.w400,
+                                            ),
                                           ),
                                         ),
-                                      ),
-                                      IconButton(
-                                        icon: const Icon(Icons.edit),
-                                        onPressed: () => _editFamilyMoreName(
-                                            relationName, name),
-                                      ),
-                                    ],
+                                        IconButton(
+                                          icon: const Icon(Icons.edit),
+                                          onPressed: () => _editFamilyMoreName(
+                                              relationName, name),
+                                        ),
+                                      ],
+                                    ),
                                   ),
                                 ),
                               ],

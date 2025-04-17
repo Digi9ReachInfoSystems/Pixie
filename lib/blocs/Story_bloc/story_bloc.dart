@@ -1,9 +1,13 @@
 import 'dart:io';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_sound/flutter_sound.dart';
-import 'package:flutter_sound/public/flutter_sound_recorder.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:audio_session/audio_session.dart';
+
+import 'package:pixieapp/widgets/audio_controller.dart';
 import 'story_event.dart';
 import 'story_state.dart';
 import 'package:pixieapp/repositories/story_repository.dart';
@@ -11,13 +15,15 @@ import 'package:pixieapp/repositories/story_repository.dart';
 class StoryBloc extends Bloc<StoryEvent, StoryState> {
   final StoryRepository storyRepository;
   final FlutterSoundRecorder _recorder = FlutterSoundRecorder();
+  final FlutterSoundPlayer _player = FlutterSoundPlayer();
+  final AudioController _audioController = AudioController();
+
   String? _audioPath;
-  String? event;
 
   StoryBloc({required this.storyRepository}) : super(StoryInitial()) {
-    _initializeRecorder();
+    _initializeAudio();
 
-    // Register events
+    // Event Handlers
     on<GenerateStoryEvent>(_onGenerateStoryEvent);
     on<SpeechToTextEvent>(_onSpeechToTextEvent);
     on<AddMusicEvent>(_onAddMusicEvent);
@@ -27,67 +33,115 @@ class StoryBloc extends Bloc<StoryEvent, StoryState> {
     on<StopplayingEvent>((event, emit) async => await _stopplaying(emit));
   }
 
-  // Initialize the recorder
-  Future<void> _initializeRecorder() async {
+  /// Platform-aware audio initialization
+  Future<void> _initializeAudio() async {
     try {
+      if (Platform.isIOS) {
+        var directory = await getApplicationDocumentsDirectory();
+        _audioPath = '${directory.path}/';
+      } else {
+        _audioPath = '/sdcard/Download/appname/';
+      }
+
+      await Directory(_audioPath!).create(recursive: true);
+
       await _recorder.openRecorder();
-      _recorder.setSubscriptionDuration(const Duration(milliseconds: 500));
+      await _player.openPlayer();
+
+      if (Platform.isIOS) {
+        final session = await AudioSession.instance;
+        await session.configure(AudioSessionConfiguration(
+          avAudioSessionCategory: AVAudioSessionCategory.playAndRecord,
+          avAudioSessionCategoryOptions:
+              AVAudioSessionCategoryOptions.allowBluetooth |
+                  AVAudioSessionCategoryOptions.defaultToSpeaker,
+          avAudioSessionMode: AVAudioSessionMode.spokenAudio,
+          androidAudioAttributes: const AndroidAudioAttributes(
+            contentType: AndroidAudioContentType.speech,
+            usage: AndroidAudioUsage.voiceCommunication,
+            flags: AndroidAudioFlags.none,
+          ),
+          androidAudioFocusGainType: AndroidAudioFocusGainType.gain,
+          androidWillPauseWhenDucked: true,
+        ));
+      }
+
+      await _recorder.setSubscriptionDuration(const Duration(milliseconds: 10));
+      await _player.setSubscriptionDuration(const Duration(milliseconds: 10));
+
+      print('Audio session initialized.');
     } catch (e) {
-      print('Error initializing recorder: $e');
+      print('Failed to initialize audio: $e');
     }
   }
-_stopplaying(Emitter<StoryState> emit) {
-    emit(const Stopplayingstate());
-  }
-  // Start recording audio
+
   Future<void> _startRecording(Emitter<StoryState> emit) async {
     try {
-      var status = await Permission.microphone.status;
-      if (status.isDenied || status.isRestricted) {
-        status = await Permission.microphone.request();
+      if (!await _checkPermissions()) {
+        emit(AudioUploadError('Permissions not granted.'));
+        return;
       }
 
-      if (status.isGranted) {
-        final Directory? externalDir = await getExternalStorageDirectory();
-        final String externalPath = '${externalDir?.path}/Music';
-        await Directory(externalPath).create(recursive: true);
-        _audioPath =
-            '$externalPath/audio_${DateTime.now().millisecondsSinceEpoch}.aac';
+      final String fileName =
+          'audio_${DateTime.now().millisecondsSinceEpoch}.aac';
+      final String fullPath = '$_audioPath$fileName';
 
-        emit(AudioRecording());
-        await _recorder.startRecorder(toFile: _audioPath);
-      } else {
-        emit(AudioUploadError(
-            'Microphone permission is required to start recording.'));
-      }
+      emit(AudioRecording());
+
+      await _recorder.startRecorder(
+        toFile: fullPath,
+        codec: Codec.aacMP4,
+      );
+
+      print('Recording started: $fullPath');
     } catch (e) {
-      emit(AudioUploadError('Failed to start recording: $e'));
+      emit(AudioUploadError('Start recording failed: $e'));
     }
   }
 
-  // Stop recording audio
   Future<void> _stopRecording(Emitter<StoryState> emit) async {
     try {
-      await _recorder.stopRecorder();
-      if (_audioPath != null) {
-        emit(AudioStopped(audioPath: _audioPath!));
-        print('Recording stopped. File saved at $_audioPath');
+      final filePath = await _recorder.stopRecorder();
+      if (filePath != null) {
+        final file = File(filePath);
+        if (await file.exists() && (await file.length() > 0)) {
+          emit(AudioStopped(audioPath: filePath));
+        } else {
+          emit(AudioUploadError('Empty or missing file.'));
+        }
       } else {
-        emit(AudioUploadError('Recording failed; audio path is null.'));
+        emit(AudioUploadError('Recording path is null.'));
       }
     } catch (e) {
-      emit(AudioUploadError('Failed to stop recording: $e'));
+      emit(AudioUploadError('Stop recording failed: $e'));
     }
   }
 
-  // Event handler for generating a story
+  Future<bool> _checkPermissions() async {
+    var micStatus = await Permission.microphone.status;
+    var storageStatus = await Permission.storage.status;
+
+    if (!micStatus.isGranted) micStatus = await Permission.microphone.request();
+    if (!storageStatus.isGranted)
+      storageStatus = await Permission.storage.request();
+
+    if (Platform.isAndroid) {
+      var manageStorage = await Permission.manageExternalStorage.status;
+      if (!manageStorage.isGranted) {
+        manageStorage = await Permission.manageExternalStorage.request();
+      }
+    }
+
+    return micStatus.isGranted && storageStatus.isGranted;
+  }
+
   Future<void> _onGenerateStoryEvent(
       GenerateStoryEvent event, Emitter<StoryState> emit) async {
     emit(StoryLoading());
     try {
       final storyResponse = await storyRepository.generateStory(
         event: event.event,
-        age: event.age,
+        age: int.parse(event.age),
         topic: event.topic,
         child_name: event.childName,
         gender: event.gender,
@@ -97,15 +151,15 @@ _stopplaying(Emitter<StoryState> emit) {
         lessons: event.lessons,
         length: event.length,
         language: event.language,
+        character_name: event.characterName,
+        city: event.city,
       );
-
       emit(StorySuccess(story: storyResponse));
-    } catch (error) {
-      emit(StoryFailure(error: error.toString()));
+    } catch (e) {
+      emit(StoryFailure(error: e.toString()));
     }
   }
 
-  // Event handler for converting speech to text
   Future<void> _onSpeechToTextEvent(
       SpeechToTextEvent event, Emitter<StoryState> emit) async {
     emit(StoryLoading());
@@ -113,40 +167,77 @@ _stopplaying(Emitter<StoryState> emit) {
       final audioFile = await storyRepository.speechToText(
         text: event.text,
         language: event.language,
+        event: event.event,
       );
       emit(StoryAudioSuccess(audioFile: audioFile));
-    } catch (error) {
-      emit(StoryFailure(error: error.toString()));
+    } catch (e) {
+      emit(StoryFailure(error: e.toString()));
     }
   }
 
-  // Event handler for adding music to audio file
   Future<void> _onAddMusicEvent(
       AddMusicEvent event, Emitter<StoryState> emit) async {
     emit(StoryLoading());
     try {
-      print('fff${event.event}');
       final audioFile = await storyRepository.addMusicToAudio(
         event: event.event,
         audioFile: event.audiofile,
       );
-      print('gg$audioFile');
       emit(RecordedStoryAudioSuccess(musicAddedaudioFile: audioFile));
-    } catch (error) {
-      emit(StoryFailure(error: error.toString()));
+    } catch (e) {
+      emit(StoryFailure(error: e.toString()));
     }
   }
 
-  // Event handler for starting the recording interface
   void _onStartRecordnavbarEvent(
       StartRecordnavbarEvent event, Emitter<StoryState> emit) {
     emit(StartRecordaudioScreen());
   }
 
-  // Dispose the recorder when bloc is closed
+  Future<void> _stopplaying(Emitter<StoryState> emit) async {
+    _audioController.stop();
+    emit(const Stopplayingstate());
+  }
+
   @override
   Future<void> close() async {
-    await _recorder.closeRecorder();
+    try {
+      if (_recorder.isRecording) {
+        await _recorder.stopRecorder();
+      }
+      await _recorder.closeRecorder();
+      await _player.closePlayer();
+    } catch (e) {
+      print('Error closing recorder/player: $e');
+    }
     return super.close();
+  }
+}
+
+// Firebase upload helpers (can be moved to a util class if needed)
+Future<void> _updateStoryWithAudioUrl(
+  DocumentReference<Object?>? storyref,
+  String audioUrl,
+) async {
+  if (storyref != null) {
+    try {
+      await storyref.update({'audiofile': audioUrl});
+    } catch (e) {
+      print('Firestore update error: $e');
+    }
+  }
+}
+
+Future<String?> _uploadAudioToStorage(File audioFile) async {
+  try {
+    final ref = FirebaseStorage.instance
+        .ref()
+        .child('user_audio')
+        .child('${DateTime.now().millisecondsSinceEpoch}.mp3');
+    final snapshot = await ref.putFile(audioFile);
+    return await snapshot.ref.getDownloadURL();
+  } catch (e) {
+    print('Audio upload failed: $e');
+    return null;
   }
 }

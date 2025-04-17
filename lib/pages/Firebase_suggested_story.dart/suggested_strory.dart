@@ -13,8 +13,9 @@ import 'package:pixieapp/blocs/Story_bloc/story_state.dart';
 import 'package:pixieapp/const/colors.dart';
 import 'package:pixieapp/repositories/story_repository.dart';
 import 'package:pixieapp/widgets/loading_widget.dart';
-import 'package:pixieapp/widgets/navbar2.dart';
 import 'package:pixieapp/widgets/progress_nav_bar.dart';
+import 'package:pixieapp/widgets/suggestedstorynavbar.dart';
+import 'package:wakelock_plus/wakelock_plus.dart';
 
 class Firebasesuggestedstory extends StatefulWidget {
   final DocumentReference<Object?> storyDocRef;
@@ -36,6 +37,7 @@ class _FirebasesuggestedstoryState extends State<Firebasesuggestedstory> {
   @override
   void initState() {
     super.initState();
+    WakelockPlus.enable();
     _fetchUserDataAndStory();
   }
 
@@ -74,15 +76,23 @@ class _FirebasesuggestedstoryState extends State<Firebasesuggestedstory> {
       if (docSnapshot.exists) {
         Map<String, dynamic>? fetchedStoryData =
             docSnapshot.data() as Map<String, dynamic>?;
+        print(fetchedStoryData!['title']);
+        // print(fetchedStoryData['feedback_ref'].toString() ?? "null");
 
         // File? generatedAudioFile = await storyRepository.speechToText(
         //   text: fetchedStoryData?["title"]! + fetchedStoryData?["story"]!,
         //   language: fetchedStoryData?["language"],
         // );
+        print(formatText(fetchedStoryData?["title"]) +
+            formatText(fetchedStoryData?["story"]));
         context.read<StoryBloc>().add(SpeechToTextEvent(
-              language: fetchedStoryData?["language"],
-              text: fetchedStoryData?["title"]! + fetchedStoryData?["story"]!,
-            ));
+            language: fetchedStoryData?["language"],
+          
+            // formatText(fetchedStoryData["title"]) +
+            //     formatText(fetchedStoryData["story"]),
+            text: formatText("${fetchedStoryData["title"]}.") +
+      formatText(fetchedStoryData["story"]),
+            event: fetchedStoryData?["event"]));
         // String? geaudioUrl = await _uploadAudioToStorage(generatedAudioFile);
         setState(() {
           storyData = fetchedStoryData;
@@ -227,13 +237,16 @@ class _FirebasesuggestedstoryState extends State<Firebasesuggestedstory> {
           ],
         ),
         bottomNavigationBar: state is StoryAudioSuccess
-            ? NavBar2(
+            ? SuggstedStoryNavbar(
+                dislike: storyData?["feedback_ref"] == null ? false : true,
+                liked: storyData?["isfav"] == true ? true : false,
                 documentReference: widget.storyDocRef,
                 audioFile: state.audioFile,
-                story: storyData?["story"] ?? 'No Story available',
-                title: storyData?["title"] ?? 'No title available',
+                story: formatText(storyData?["story"] ?? "No data") ??
+                    'No Story available',
+                title: formatText(storyData?["title"] ?? "No data") ??
+                    'No title available',
                 firebaseAudioPath: "audioUrl",
-                suggestedStories: true,
                 firebaseStories: false,
               )
             : const ProgressNavBar(),

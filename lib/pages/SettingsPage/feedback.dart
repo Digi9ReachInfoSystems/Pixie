@@ -7,6 +7,7 @@ import 'package:pixieapp/blocs/Feedback/feedback_bloc.dart';
 import 'package:pixieapp/blocs/Feedback/feedback_event.dart';
 import 'package:pixieapp/blocs/Feedback/feedback_state.dart';
 import 'package:pixieapp/const/colors.dart';
+import 'package:pixieapp/widgets/analytics.dart';
 import 'package:pixieapp/widgets/widgets_index.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:go_router/go_router.dart';
@@ -30,6 +31,10 @@ class _FeedbackPageState extends State<FeedbackPage> {
     //   context.read<FeedbackBloc>().add(CheckFeedbackEvent(user.uid));
     // }
     currentQuestionsLikedDisliked = _initialQuestions();
+    AnalyticsService.logScreenView(
+      screenName: '/feedbackPage',
+      screenClass: 'Feedback Screen',
+    );
   }
 
   @override
@@ -165,7 +170,7 @@ class _FeedbackPageState extends State<FeedbackPage> {
     return Card(
       child: Container(
         width: deviceWidth * 0.9,
-        height: deviceHeight * 0.36,
+        // height: deviceHeight * 0.6,
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
           color: AppColors.kwhiteColor,
@@ -259,12 +264,14 @@ class _FeedbackPageState extends State<FeedbackPage> {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(20),
           ),
-          backgroundColor: AppColors.kwhiteColor,
+          backgroundColor: currentRating == 0
+              ? AppColors.kwhiteColor
+              : AppColors.buttonColor1,
         ),
         onPressed: () {
           User? user = FirebaseAuth.instance.currentUser;
 
-          if (user != null) {
+          if (user != null && currentRating != 0) {
             final userRef =
                 FirebaseFirestore.instance.collection('users').doc(user.uid);
             context.read<FeedbackBloc>().add(
@@ -279,7 +286,9 @@ class _FeedbackPageState extends State<FeedbackPage> {
         child: Text(
           'Submit',
           style: theme.textTheme.bodyLarge!.copyWith(
-            color: AppColors.textColorblue,
+            color: currentRating == 0
+                ? AppColors.textColorblue
+                : AppColors.textColorWhite,
             fontSize: 20,
             fontWeight: FontWeight.w400,
           ),
@@ -331,22 +340,12 @@ class _FeedbackPageState extends State<FeedbackPage> {
   }
 }
 
-// Future<void> openWhatsAppChat() async {
-//   const whatsappUrl = 'https://wa.me/+918547062699';
-//   final uri = Uri.parse(whatsappUrl);
-
-//   if (await canLaunchUrl(uri)) {
-//     await launchUrl(uri, mode: LaunchMode.externalApplication);
-//   } else {
-//     throw 'Could not launch WhatsApp';
-//   }
-// }
 Future<void> openWhatsAppChat() async {
-  const url = "https://wa.me/?text=YourTextHere";
-  var uri = Uri.encodeFull(url);
+  const whatsappUrl = 'https://wa.me/+919643221767';
+  final uri = Uri.parse(whatsappUrl);
 
-  if (await canLaunchUrl(Uri.parse(uri))) {
-    await launchUrl(Uri.parse(uri), mode: LaunchMode.externalApplication);
+  if (await canLaunchUrl(uri)) {
+    await launchUrl(uri, mode: LaunchMode.externalApplication);
   } else {
     throw 'Could not launch WhatsApp';
   }

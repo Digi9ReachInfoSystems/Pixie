@@ -79,7 +79,8 @@ class _OnboardingPageState extends State<OnboardingPage> {
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 20.0),
                   child: ElevatedButton(
-                    onPressed: () => context.push('/CreateAccount'),
+                    onPressed: () => context.push('/CreateAccount',
+                        extra: 'Create an account'),
                     style: ElevatedButton.styleFrom(
                         backgroundColor: AppColors.buttonblue,
                         minimumSize: Size(devicewidth, 50),

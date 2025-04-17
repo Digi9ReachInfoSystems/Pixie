@@ -16,8 +16,10 @@ class AddCharacterBloc extends Bloc<AddCharacterEvent, AddCharacterState> {
             genre: 'surprise me',
             musicAndSpeed: 'notselected',
             fav: false,
+            dislike: false,
             showfeedback: true,
-            charactorname: null)) {
+            charactorname: null,
+            characterName: '')) {
     // Handle page change events
     on<PageChangeEvent>((event, emit) {
       emit(state.copyWith(currentPageIndex: event.currentPageIndex));
@@ -26,6 +28,10 @@ class AddCharacterBloc extends Bloc<AddCharacterEvent, AddCharacterState> {
     // Handle language change events
     on<LanguageChangeEvent>((event, emit) {
       emit(state.copyWith(language: event.language));
+    });
+    // Handle character name change events
+    on<UpdateCharactername>((event, emit) {
+      emit(state.copyWith(characterName: event.characterName));
     });
 
     // Handle resetting lovedOnce to null
@@ -68,6 +74,10 @@ class AddCharacterBloc extends Bloc<AddCharacterEvent, AddCharacterState> {
     on<UpdatefavbuttonEvent>((event, emit) {
       emit(state.copyWith(fav: event.fav));
     });
+    //  Handle update dislikebutton event
+    on<UpdatedislikebuttonEvent>((event, emit) {
+      emit(state.copyWith(dislike: event.dislike));
+    });
     // Handle update feedback popup
     on<ShowfeedbackEvent>((event, emit) {
       emit(state.copyWith(showfeedback: event.showfeedback));
@@ -89,7 +99,9 @@ class AddCharacterBloc extends Bloc<AddCharacterEvent, AddCharacterState> {
           genre: 'surprise me',
           musicAndSpeed: 'notselected',
           showfeedback: true,
-          fav: false));
+          fav: false,
+          dislike: false,
+          characterName: ''));
     });
   }
 }

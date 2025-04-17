@@ -8,6 +8,7 @@ import 'package:pixieapp/blocs/Library_bloc/library_bloc.dart';
 import 'package:pixieapp/blocs/Library_bloc/library_event.dart';
 import 'package:pixieapp/blocs/Library_bloc/library_state.dart';
 import 'package:pixieapp/const/colors.dart';
+import 'package:pixieapp/widgets/analytics.dart';
 import 'package:pixieapp/widgets/loading_widget.dart';
 import 'package:pixieapp/widgets/navbar.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -29,6 +30,10 @@ class _LibraryState extends State<Library> {
       context.read<FetchStoryBloc>().add(FetchStories(
           FirebaseFirestore.instance.collection('users').doc(user?.uid)));
     }
+    AnalyticsService.logScreenView(
+      screenName: '/Library',
+      screenClass: 'Library Screen',
+    );
   }
 
   @override
@@ -191,6 +196,18 @@ class _LibraryState extends State<Library> {
     );
   }
 
+  Future<void> openWhatsAppChat(String text) async {
+    final encodedText = Uri.encodeComponent(text);
+
+    final url = "https://wa.me/?text=$encodedText";
+
+    if (await canLaunchUrl(Uri.parse(url))) {
+      await launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
+    } else {
+      throw 'Could not launch WhatsApp';
+    }
+  }
+
   Widget filterChoicechip({
     required ThemeData theme,
     required bool selected,
@@ -240,17 +257,18 @@ class _LibraryState extends State<Library> {
           return Padding(
             padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 10),
             child: storylistCard(
-              story: story['story'] ?? 'story',
+              audiourl: story['audiofile'],
               genre: story['genre'] ?? 'Funny',
               theme: theme,
               title: story['title'],
+              story: story['story'] ?? 'story',
               storytype: story['storytype'],
               duration: _formatCreatedTime(story['createdTime']),
               image: '',
               storyRef: storyRef,
               ontap: () {
                 if (storyRef != null && storyRef is DocumentReference) {
-                  context.push('/Firebasestory', extra: storyRef);
+                  context.push('/Firebasestorylibrary', extra: storyRef);
                 }
               },
             ),
@@ -272,6 +290,7 @@ class _LibraryState extends State<Library> {
     required String duration,
     required String image,
     required String story,
+    required String audiourl,
     required DocumentReference storyRef,
     required void Function() ontap,
   }) {
@@ -349,7 +368,7 @@ class _LibraryState extends State<Library> {
               child: IconButton(
                 onPressed: () {
                   openWhatsAppChat(
-                      "${title}\n\n${story}\n\n Hey parent! Create personalized audio stories for your child! Introduce them to AI, inspiring them to think beyond. Pixie – their adventure buddy to reduce screentime \n\n For ios app:https://apps.apple.com/in/app/pixie-dream-create-inspire/id6737147663\n\n For Android app : https://play.google.com/store/apps/details?id=com.fabletronic.pixie.");
+                      '''🎧Hey! Listen to the personalized story I created for my child. \n\n$title\n\n$audiourl \n\nYou can create such personalized audio stories for your children too! Download the app now \n For ios app:https://apps.apple.com/us/app/pixie-dream-create-inspire/id6737147663\n\n For Android app : https://play.google.com/store/apps/details?id=com.fabletronic.pixie.''');
                 },
                 icon: SvgPicture.asset(
                   'assets/images/share.svg',
@@ -367,7 +386,7 @@ class _LibraryState extends State<Library> {
 }
 
 String _formatCreatedTime(Timestamp? timestamp) {
-  if (timestamp == null) return 'Unknown Date'; // Handle null gracefully
+  if (timestamp == null) return 'Unknown Date';
 
   final DateTime dateTime = timestamp.toDate();
   final Duration difference = DateTime.now().difference(dateTime);
@@ -386,16 +405,5 @@ String _formatCreatedTime(Timestamp? timestamp) {
     return '1 day ago';
   } else {
     return '${difference.inDays} days ago';
-  }
-}
-
-Future<void> openWhatsAppChat(String text) async {
-  var url = "https://wa.me/?text=$text";
-  var uri = Uri.encodeFull(url);
-
-  if (await canLaunchUrl(Uri.parse(uri))) {
-    await launchUrl(Uri.parse(uri), mode: LaunchMode.externalApplication);
-  } else {
-    throw 'Could not launch WhatsApp';
   }
 }

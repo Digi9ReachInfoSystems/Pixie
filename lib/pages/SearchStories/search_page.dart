@@ -94,13 +94,13 @@ class _SearchPageState extends State<SearchPage> {
                   contentPadding: const EdgeInsets.only(left: 15),
                   border: const OutlineInputBorder(
                     borderRadius: BorderRadius.all(Radius.circular(13)),
-                    borderSide: BorderSide(
-                      color: AppColors.kpurple,
-                    ),
+                    borderSide: BorderSide(color: AppColors.kpurple),
                   ),
                   focusedBorder: const OutlineInputBorder(
                     borderRadius: BorderRadius.all(Radius.circular(13)),
-                    borderSide: BorderSide(color: AppColors.kpurple, width: 2),
+                    borderSide: BorderSide(
+                        color: AppColors.kpurple,
+                        width: 2), // Purple border when focused
                   ),
                   fillColor: AppColors.kwhiteColor,
                   focusColor: AppColors.textColorblue,

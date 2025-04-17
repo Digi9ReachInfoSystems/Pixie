@@ -8,8 +8,10 @@ import 'package:pixieapp/models/story_model.dart';
 import 'package:pixieapp/pages/AddCharacter.dart/add_character.dart';
 import 'package:pixieapp/pages/AllStories/all_stories.dart';
 import 'package:pixieapp/pages/CreateAccount/createaccount.dart';
+import 'package:pixieapp/pages/CreateAccount/login_with_phone.dart';
 import 'package:pixieapp/pages/CreateAccountWithMail/create_account_with_email.dart';
 import 'package:pixieapp/pages/FirebaseStory/firebasestory.dart';
+import 'package:pixieapp/pages/FirebaseStory/firebasestorylibrary.dart';
 import 'package:pixieapp/pages/Firebase_suggested_story.dart/suggested_strory.dart';
 import 'package:pixieapp/pages/IntroductionPages/introduction_pages.dart';
 import 'package:pixieapp/pages/Library/Library.dart';
@@ -43,16 +45,19 @@ bool isAuthStateChecked(BuildContext context) {
 
 Future<bool> checkIfNewUser(String userId) async {
   try {
+    print("11111");
     DocumentSnapshot userDoc =
         await FirebaseFirestore.instance.collection('users').doc(userId).get();
+    print("2222222");
     if (userDoc.exists) {
       var userData = userDoc.data() as Map<String, dynamic>;
-      return userData['newUser'] ?? false;
+      print("userData['newUser']");
+      return userData['newUser'] ?? true;
     }
   } catch (e) {
     print('Error checking Firestore user: $e');
   }
-  return false;
+  return true;
 }
 
 final GoRouter router = GoRouter(
@@ -69,7 +74,7 @@ final GoRouter router = GoRouter(
               authState is AuthAuthenticated ? authState.userId : null;
           return FutureBuilder<bool>(
             future:
-                userId != null ? checkIfNewUser(userId) : Future.value(false),
+                userId != null ? checkIfNewUser(userId) : Future.value(true),
             builder: (context, snapshot) {
               if (snapshot.connectionState == ConnectionState.waiting) {
                 return const LoadingWidget();
@@ -116,7 +121,16 @@ final GoRouter router = GoRouter(
     ),
     GoRoute(
       path: '/CreateAccount',
-      builder: (context, state) => const CreateAccount(),
+      builder: (context, state) {
+        final String title = state.extra as String;
+        return CreateAccount(title: title);
+      },
+    ),
+    GoRoute(
+      path: '/loginwithphone',
+      builder: (context, state) {
+        return const Loginwithphone();
+      },
     ),
     GoRoute(
       path: '/Loginpage',
@@ -132,13 +146,14 @@ final GoRouter router = GoRouter(
         final story = state.extra as Map<String, String>;
         final storytype = state.uri.queryParameters['storytype'];
         final language = state.uri.queryParameters['language'] ?? 'English';
-        final genre = state.uri.queryParameters['genre'] ?? 'surprise me';
+        final genre = state.uri.queryParameters['genre'] ?? "Funny";
 
         return StoryGeneratePage(
-            story: story,
-            storytype: storytype!,
-            language: language,
-            genre: genre!);
+          story: story,
+          storytype: storytype!,
+          language: language,
+          genre: genre,
+        );
       },
     ),
     GoRoute(
@@ -209,10 +224,36 @@ final GoRouter router = GoRouter(
       },
     ),
     GoRoute(
+      path: '/Firebasestorylibrary',
+      builder: (context, state) {
+        final storyDocRef = state.extra as DocumentReference<Object?>;
+        return Firebasestorylibrary(storyDocRef: storyDocRef);
+      },
+    ),
+    GoRoute(
       path: '/Firebasesuggestedstory',
       builder: (context, state) {
         final storyDocRef = state.extra as DocumentReference<Object?>;
         return Firebasesuggestedstory(storyDocRef: storyDocRef);
+      },
+    ),
+    GoRoute(
+      path: '/Firebasestory1',
+      builder: (context, state) {
+        final storyDocRef = state.extra as DocumentReference<Object?>;
+        return Firebasestory(storyDocRef: storyDocRef);
+      },
+      pageBuilder: (context, state) {
+        // Return a CustomTransitionPage with no animation
+        return CustomTransitionPage(
+          child: Firebasestory(
+            storyDocRef: state.extra as DocumentReference<Object?>,
+          ),
+          transitionsBuilder: (context, animation, secondaryAnimation, child) {
+            // No animation, just return the child immediately
+            return child;
+          },
+        );
       },
     ),
   ],
@@ -223,7 +264,8 @@ final GoRouter router = GoRouter(
       return '/';
     }
 
-    final isLoggedIn = authState is AuthAuthenticated;
+    final isLoggedIn =
+        authState is AuthAuthenticated || state is AuthAppleSignInSuccess;
     final isGuest = authState is AuthGuest;
     final isOnLoginPage =
         state.uri.toString() == '/Loginpage' || state.uri.toString() == '/';

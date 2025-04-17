@@ -23,20 +23,23 @@ class GenerateStoryEvent extends StoryEvent {
   final String lessons;
   final String length;
   final String language;
+  final String characterName;
+  final String city;
 
-  const GenerateStoryEvent({
-    required this.event,
-    required this.age,
-    required this.topic,
-    required this.childName,
-    required this.gender,
-    required this.relation,
-    required this.relativeName,
-    required this.genre,
-    required this.lessons,
-    required this.length,
-    required this.language,
-  });
+  const GenerateStoryEvent(
+      {required this.event,
+      required this.age,
+      required this.topic,
+      required this.childName,
+      required this.gender,
+      required this.relation,
+      required this.relativeName,
+      required this.genre,
+      required this.lessons,
+      required this.length,
+      required this.language,
+      required this.characterName,
+      required this.city});
 
   @override
   List<Object?> get props => [
@@ -51,6 +54,8 @@ class GenerateStoryEvent extends StoryEvent {
         lessons,
         length,
         language,
+        characterName,
+        city
       ];
 }
 
@@ -58,11 +63,10 @@ class GenerateStoryEvent extends StoryEvent {
 class SpeechToTextEvent extends StoryEvent {
   final String text;
   final String language;
+  final String event;
 
-  const SpeechToTextEvent({
-    required this.text,
-    required this.language,
-  });
+  const SpeechToTextEvent(
+      {required this.text, required this.language, required this.event});
 
   @override
   List<Object?> get props => [text, language];
@@ -82,8 +86,6 @@ class AddMusicEvent extends StoryEvent {
   List<Object?> get props => [event, audiofile];
 }
 
-class StopplayingEvent extends StoryEvent {}
-
 // Event record or leson option
 class RecordnavbarEvent extends StoryEvent {
   const RecordnavbarEvent();
@@ -97,3 +99,5 @@ class StartRecordnavbarEvent extends StoryEvent {
 class StartRecordingEvent extends StoryEvent {}
 
 class StopRecordingEvent extends StoryEvent {}
+
+class StopplayingEvent extends StoryEvent {}

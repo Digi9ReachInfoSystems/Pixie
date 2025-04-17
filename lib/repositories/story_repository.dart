@@ -12,7 +12,7 @@ class StoryRepository {
 
   Future<Map<String, String>> generateStory({
     required String event,
-    required String age,
+    required int age,
     required String topic,
     required String child_name,
     required String gender,
@@ -22,7 +22,10 @@ class StoryRepository {
     required String lessons,
     required String length,
     required String language,
+    required String character_name,
+    required String city,
   }) async {
+    print(city);
     final response = await http.post(Uri.parse(storyApiUrl),
         body: jsonEncode(
           {
@@ -37,6 +40,8 @@ class StoryRepository {
             'lessons': lessons,
             'length': 200,
             'language': language,
+            'character_name': character_name,
+            'location': city
           },
         ));
 
@@ -55,13 +60,12 @@ class StoryRepository {
   Future<File> speechToText({
     required String text,
     required String language,
+    required String event,
   }) async {
     final response = await http.post(
       Uri.parse(audioApiUrl),
-      body: jsonEncode({
-        'text': text,
-        'language': language,
-      }),
+      body: jsonEncode(
+          {'text': text, 'language': language, 'event': event.toLowerCase()}),
     );
 
     if (response.statusCode == 200) {
@@ -87,7 +91,6 @@ class StoryRepository {
     required String event,
     required File audioFile,
   }) async {
-    print('llle$event');
     // Create a multipart request to upload the audio file along with the event
     final request =
         http.MultipartRequest('POST', Uri.parse(musicAdditionApiUrl));
@@ -123,5 +126,36 @@ class StoryRepository {
       print("Error uploading file to Firebase Storage: $e");
       throw Exception('Failed to upload audio to Firebase');
     }
+  }
+
+  Future<void> saveAudioUrlToFirestore(
+      String documentId, String audioUrl) async {
+    try {
+      await FirebaseFirestore.instance
+          .collection('fav_stories')
+          .doc(documentId)
+          .update({
+        'audioRecordUrl': audioUrl,
+      });
+    } catch (e) {
+      print("Error saving audio URL to Firestore: $e");
+      throw Exception('Failed to save audio URL to Firestore');
+    }
+  }
+
+  Future<void> processAndUploadAudio({
+    required String event,
+    required String documentId,
+    required File localAudioFile,
+  }) async {
+    // Step 1: Add background music to the audio using the API
+    final musicAddedAudio =
+        await addMusicToAudio(event: event, audioFile: localAudioFile);
+
+    // Step 2: Upload the processed audio to Firebase Storage and get its URL
+    final audioUrl = await uploadAudioToFirebase(musicAddedAudio);
+
+    // Step 3: Save the audio URL to Firestore
+    await saveAudioUrlToFirestore(documentId, audioUrl);
   }
 }

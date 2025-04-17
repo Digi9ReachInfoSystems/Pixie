@@ -23,6 +23,7 @@ import 'package:pixieapp/routes/routes.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -31,7 +32,8 @@ void main() async {
     DeviceOrientation.portraitDown,
   ]);
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
-
+  print('11111');
+  FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
   runApp(const MyApp());
 }
 
@@ -47,8 +49,8 @@ class _MyAppState extends State<MyApp> {
 
   @override
   void initState() {
+    requestNotificationPermissions();
     super.initState();
-    // Handle dynamic links on startup
   }
 
   @override
@@ -99,31 +101,30 @@ class _MyAppState extends State<MyApp> {
     );
   }
 }
-//   void handleDynamicLinks() async {
-//     // For initial dynamic link when the app is opened through the link
-//     final PendingDynamicLinkData? initialLink =
-//         await FirebaseDynamicLinks.instance.getInitialLink();
 
-//     if (initialLink != null) {
-//       final Uri deepLink = initialLink.link;
-//       _handleDeepLink(deepLink);
-//     }
+void requestNotificationPermissions() async {
+  FirebaseMessaging messaging = FirebaseMessaging.instance;
 
-//     // For when the app is already opened and a new link is clicked
-//     FirebaseDynamicLinks.instance.onLink.listen((dynamicLinkData) {
-//       _handleDeepLink(dynamicLinkData.link);
-//     }).onError((error) {
-//       print('Dynamic Link Failed: $error');
-//     });
-//   }
+  NotificationSettings settings = await messaging.requestPermission(
+    alert: true,
+    announcement: false,
+    badge: true,
+    carPlay: false,
+    criticalAlert: false,
+    provisional: false,
+    sound: true,
+  );
 
-//   void _handleDeepLink(Uri link) {
-//     if (link.queryParameters.containsKey('id')) {
-//       final storyId = link.queryParameters['id'];
-//       if (storyId != null) {
-//         // Use GoRouter to navigate to the story details page with the storyId
-//         _router.go('/storyDetails', extra: storyId);
-//       }
-//     }
-//   }
-// }
+  if (settings.authorizationStatus == AuthorizationStatus.authorized) {
+    print('User granted permission');
+  } else if (settings.authorizationStatus == AuthorizationStatus.provisional) {
+    print('User granted provisional permission');
+  } else {
+    print('User declined or has not accepted permission');
+  }
+}
+
+Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
+  print("Handling a background message: ${message.messageId}");
+  // Process your data here
+}

@@ -35,7 +35,7 @@ class _AddNewCharacterState extends State<AddNewCharacter> {
               textCapitalization: TextCapitalization.sentences,
               style: theme.textTheme.bodyMedium,
               autofocus: true,
-              decoration: InputDecoration(
+              decoration: const InputDecoration(
                 hintText: "Character name",
                 hintStyle: TextStyle(color: Color.fromARGB(255, 199, 199, 199)),
                 filled: true,

@@ -8,9 +8,7 @@ abstract class StoryState extends Equatable {
   @override
   List<Object?> get props => [];
 }
-class Stopplayingstate extends StoryState {
-  const Stopplayingstate();
-}
+
 // Initial state, when nothing has happened yet
 class StoryInitial extends StoryState {}
 
@@ -76,9 +74,12 @@ class AudioRecorded extends StoryState {
 
 class AudioStopped extends StoryState {
   final String audioPath;
- 
 
-  AudioStopped({required this.audioPath, });
+  AudioStopped({required this.audioPath});
+}
+
+class Stopplayingstate extends StoryState {
+  const Stopplayingstate();
 }
 
 class AudioUploading extends StoryState {}
